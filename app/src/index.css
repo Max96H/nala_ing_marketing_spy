@@ -1,0 +1,354 @@
+:root {
+  --color-paper: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-ink: #12181f;
+  --color-ink-soft: #4b5563;
+  --color-ink-faint: #8b93a1;
+  --color-border: #e4e7eb;
+  --color-accent: #1c7c8c;
+  --color-accent-soft: #e5f2f3;
+  --color-amber: #c98a2b;
+  --color-amber-soft: #fbf0df;
+
+  /* categorical bank colors — used only inside charts/legends, never UI chrome */
+  --bank-ing: #d97a3d;
+  --bank-kbc: #2e7d6b;
+  --bank-bnp: #3a5f8a;
+  --bank-belfius: #b23a48;
+  --bank-revolut: #2b2f36;
+  --bank-other: #7b5ea7;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+
+  --sidebar-width: 216px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-feature-settings: "tnum" 1, "lnum" 1; /* tabular figures for aligned numbers */
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+::selection {
+  background: var(--color-accent-soft);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Layout */
+/* ---------------------------------------------------------------------- */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 16px;
+}
+
+.sidebar-brand {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  padding: 0 8px 28px;
+  line-height: 1.3;
+}
+
+.sidebar-brand span {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ink-faint);
+  font-family: var(--font-body);
+  margin-top: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: var(--color-ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: none;
+  text-align: left;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+.nav-item:hover {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.nav-item.active {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.nav-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.main {
+  flex: 1;
+  padding: 36px 44px;
+  max-width: 1180px;
+}
+
+.main-header {
+  margin-bottom: 28px;
+}
+
+.main-header h1 {
+  font-size: 22px;
+}
+
+.main-header p {
+  color: var(--color-ink-soft);
+  font-size: 14px;
+  margin: 6px 0 0;
+  max-width: 620px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Shared pieces */
+/* ---------------------------------------------------------------------- */
+
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.panel + .panel {
+  margin-top: 20px;
+}
+
+.summary-row {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.summary-stat {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+
+.summary-stat .value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.summary-stat .label {
+  color: var(--color-ink-soft);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+th {
+  text-align: left;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  font-size: 12.5px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge.offer {
+  background: var(--color-amber-soft);
+  color: var(--color-amber);
+}
+
+.badge.gap {
+  background: var(--color-amber-soft);
+  color: var(--color-amber);
+}
+
+.empty-state {
+  color: var(--color-ink-soft);
+  font-size: 14px;
+  padding: 32px 8px;
+  line-height: 1.6;
+}
+
+.empty-state code {
+  background: var(--color-paper);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Chat */
+/* ---------------------------------------------------------------------- */
+
+.chat-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 130px);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.chat-msg {
+  max-width: 640px;
+  padding: 11px 15px;
+  border-radius: 8px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.chat-msg.user {
+  background: var(--color-accent);
+  color: #fff;
+  margin-left: auto;
+}
+
+.chat-msg.assistant {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.chat-msg.thinking {
+  color: var(--color-ink-faint);
+  font-style: italic;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.chat-input-row input {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  background: var(--color-surface);
+}
+
+.chat-input-row input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.chat-input-row button {
+  padding: 0 20px;
+  background: var(--color-ink);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chat-input-row button:disabled {
+  background: var(--color-ink-faint);
+  cursor: default;
+}
+
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chat-suggestion {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 16px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--color-ink-soft);
+}
+
+.chat-suggestion:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
