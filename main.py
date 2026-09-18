@@ -1,71 +1,101 @@
-# """
-# ING Banking Campaigns Comparator — main entry point
+from playwright.sync_api import sync_playwright
+from config import banks
+from src.extract_colors import extract_page_colors, save_colors_to_sqlite
+from src.cookies import handle_cookie_banner
+from src.insertion_db import save_to_sqlite
+from src.html_scraper import extract_marketing_data
+import argparse
 
-# Runs the pipeline end to end:
-#   1. Collector  — render each page with Playwright, extract deterministic
-#                    features, save screenshots, write raw rows to campaigns.db
-#   2. Analyst    — send each row's raw_text to an LLM (via Groq), fill in
-#                    tone / value_proposition / topics
-#   3. Watchdog   — compare today's rows to the previous snapshot (if any)
-#                    and flag what changed into the 'changes' table
+def parse_arguments():
+    """Parses command-line arguments for targeting specific banks."""
+    parser = argparse.ArgumentParser(
+        description="Scrape bank marketing pages and save design/content data to SQLite."
+    )
 
-# Run this in your OWN environment with normal internet access, and with
-# GROQ_API_KEY set. See README.md for full setup.
+    # Convert bank keys in config to lower-case for case-insensitive matching
+    available_banks = [b.lower() for b in banks.keys()]
 
-# Usage:
-#     python main.py                # run everything
-#     python main.py --skip-analyst # scrape only, skip the LLM step (e.g. no API key handy yet)
-#     python main.py --only watchdog  # re-run just one stage
-# """
+    parser.add_argument(
+        "-b",
+        "--banks",
+        nargs="+",  # Accepts one or more bank names separated by space
+        type=str.lower,  # Automatically converts inputs to lowercase
+        choices=available_banks,
+        default=available_banks,  # Defaults to processing all banks
+        help=f"Specific bank(s) to scrape. Choices: {', '.join(available_banks)}. Default: all.",
+    )
 
-# import argparse
-# import sys
-# from pathlib import Path
-# sys.path.insert(0, str(Path(__file__).parent / "src"))
+    return parser.parse_args()
 
-# import collector
-# import analyst
-# import change_watcher
-# import assistant
+def main():
+    args = parse_arguments()
+
+    # Filter the banks dictionary based on user selection
+    selected_banks = {
+        name: config
+        for name, config in banks.items()
+        if name.lower() in args.banks
+    }
+
+    print(f"Targeting banks: {', '.join(selected_banks.keys())}")
+
+    with sync_playwright() as p:
+        browser = p.firefox.launch(headless=True)
+
+        for bank, dic in selected_banks.items():
+            url = dic["url"]
+            outpath = dic["outpath"]
+
+            context = browser.new_context(
+                viewport={"width": 1920, "height": 1080}, locale="en-US"
+            )
+            page = context.new_page()
+
+            try:
+
+                print(f"\n--- Navigating to {url} ---")
+                page.goto(url, wait_until="networkidle")
+
+                if "/maintenance" in (link:=page.url):
+                    print("Redirected to maintenance page. url :", link)
+                    browser.close()
+                    return
+                print("Found :", link)
+
+                handle_cookie_banner(page)
+
+                print("Page loaded successfully:", page.title())
+                page.screenshot(path=f"./screenshots/{outpath}_design.png", full_page=True)
+
+                # Extract targeted marketing fields
+                scraped_data = extract_marketing_data(page)
+
+                # Output preview to console
+                print("\n--- Extracted Marketing Data ---")
+                for key, val in scraped_data.items():
+                    if key == "raw_text":
+                        print(f"{key}: {val[:120]}... (truncated)")
+                    else:
+                        print(f"{key}: {val}")
+
+                # Save record
+                save_to_sqlite(url, bank, scraped_data)
+
+                unique_hex_colors = extract_page_colors(page)
+                print("\nExtracted Unique HEX Colors:")
+                print(unique_hex_colors)
+
+                # Save to database
+                save_colors_to_sqlite(url, unique_hex_colors)
+
+            except Exception as e:
+                print(f"Failed to scrape {url}: {e}")
+
+            finally:
+                context.close()
+
+        browser.close()
 
 
-# STAGES = ["collector", "analyst", "watchdog"]
-# ALL_CHOICES = STAGES + ["assistant"]
-
-
-# def main() -> None:
-#     parser = argparse.ArgumentParser(description="Run the ING campaign comparator pipeline.")
-#     parser.add_argument("--skip-analyst", action="store_true",
-#                          help="Skip the LLM analysis step (useful if you don't have an API key set yet).")
-#     parser.add_argument("--only", choices=ALL_CHOICES,
-#                          help="Run only one stage instead of the full pipeline. "
-#                               "'assistant' launches the interactive chatbot and is never part of "
-#                               "the default automated run.")
-#     args = parser.parse_args()
-
-#     stages_to_run = [args.only] if args.only else STAGES
-#     if args.skip_analyst and "analyst" in stages_to_run and not args.only:
-#         stages_to_run.remove("analyst")
-
-#     for stage in stages_to_run:
-#         print(f"\n===== Running {stage} =====")
-#         try:
-#             if stage == "collector":
-#                 collector.run()
-#             elif stage == "analyst":
-#                 analyst.run()
-#             elif stage == "watchdog":
-#                 change_watcher.run()
-#             elif stage == "assistant":
-#                 assistant.run()
-#         except Exception as exc:
-#             print(f"[stage failed] {stage}: {exc}", file=sys.stderr)
-#             print(f"Stopping — fix the error above before continuing.", file=sys.stderr)
-#             sys.exit(1)
-
-#     print("\n===== Pipeline complete =====")
-#     print("Data: campaigns.db  |  Screenshots: screenshots/  |  Changes: 'changes' table in campaigns.db")
-
-
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
