@@ -3,6 +3,65 @@ import re
 
 def handle_cookie_banner(page):
     """Finds, logs, and clicks cookie banners across OneTrust, ING, BNP Paribas Fortis, and KBC."""
+    # --------------------------------------------------
+    # Scroll through the page
+    # --------------------------------------------------
+    #
+    # Some websites use lazy loading.
+    # We simulate a progressive scroll so that images
+    # and other dynamic content have a chance to load.
+    #
+
+    print()
+    print("===== SCROLLING PAGE =====")
+
+    page.evaluate(
+        """
+        async () => {
+
+            await new Promise((resolve) => {
+
+                let totalHeight = 0;
+                const distance = 500;
+                const delay = 500;
+
+                const timer = setInterval(() => {
+
+                    window.scrollBy(
+                        0,
+                        distance
+                    );
+
+                    totalHeight += distance;
+
+                    if (
+                        totalHeight >=
+                        document.body.scrollHeight
+                    ) {
+                        clearInterval(timer);
+                        resolve();
+                    }
+
+                }, delay);
+            });
+        }
+        """
+    )
+
+    # Give lazy-loaded elements a little more time
+    # to appear after scrolling.
+
+    page.wait_for_timeout(3_000)
+
+    final_scroll_height = page.evaluate(
+        "document.body.scrollHeight"
+    )
+
+    print(
+        "Final scroll height:",
+        final_scroll_height
+    )
+
     # 1. High-Precision ID & Component Selectors (OneTrust, ING Web Components, Standard ARIA roles)
     known_cookie_selectors = [
         "#onetrust-accept-btn-handler",  # Universal OneTrust Accept ID (BNP, KBC, etc.)
@@ -11,6 +70,7 @@ def handle_cookie_banner(page):
         "ing-button:has-text('Accepteer')",  # ING Dutch component
         "ing-button:has-text('Accepter')",  # ING French component
     ]
+
 
     for selector in known_cookie_selectors:
         trigger = page.locator(selector).first
