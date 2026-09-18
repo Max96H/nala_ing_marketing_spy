@@ -1,4 +1,7 @@
 from pathlib import Path
+import hashlib
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from playwright.sync_api import sync_playwright
 
@@ -7,75 +10,83 @@ from storage.raw import save_raw_html
 
 
 class BankCrawler:
+    """
+    Generic crawler used for all banks.
 
-    def __init__(
-        self,
-        bank_name: str,
-        domain: str,
-        include_keywords: list[str],
-        exclude_keywords: list[str],
-    ):
+    Bank-specific configuration is stored in banks.yaml.
+    This class only contains the crawling logic.
+
+    The crawler:
+    1. Opens a page with Firefox.
+    2. Waits for the page to load.
+    3. Scrolls through the page to trigger lazy-loaded content.
+    4. Takes a full-page screenshot.
+    5. Retrieves the final HTML.
+    6. Extracts structured information with Playwright.
+    7. Saves the raw HTML.
+
+    No bank-specific crawling logic should be added here.
+    """
+
+    def __init__(self, bank_name: str):
+        """
+        Initialize the crawler for one bank.
+
+        Parameters
+        ----------
+        bank_name:
+            Identifier used in banks.yaml, for example:
+            "ing", "kbc", "belfius" or "bnp".
+        """
+
         self.bank_name = bank_name
-        self.domain = domain
-        self.include_keywords = include_keywords
-        self.exclude_keywords = exclude_keywords
 
-    def fetch(self, url: str) -> str:
+    def fetch(self, url: str) -> dict:
+        """
+        Open, render and extract one webpage.
+
+        Returns
+        -------
+        dict
+            Contains:
+            - final URL
+            - HTTP status code
+            - raw HTML
+            - screenshot path
+            - extracted page content
+        """
 
         with sync_playwright() as p:
+
+            # --------------------------------------------------
+            # Launch Firefox
+            # --------------------------------------------------
+            #
+            # Firefox is used for the entire project.
+            # Headless=True means that no browser window is shown.
+            #
 
             browser = p.firefox.launch(
                 headless=True
             )
 
-            page = browser.new_page(
+            # --------------------------------------------------
+            # Create browser context
+            # --------------------------------------------------
+
+            context = browser.new_context(
                 locale="en-BE"
             )
 
-            # DEBUG : erreurs JavaScript
-            page.on(
-                "console",
-                lambda msg: print(
-                    "CONSOLE:",
-                    msg.type,
-                    msg.text
-                )
-            )
+            page = context.new_page()
 
-            page.on(
-                "pageerror",
-                lambda exc: print(
-                    "PAGE ERROR:",
-                    exc
-                )
-            )
-
-            # DEBUG : réponses réseau
-            def log_response(response):
-
-                content_type = response.headers.get(
-                    "content-type",
-                    ""
-                ).lower()
-
-                if (
-                    "json" in content_type
-                    or "api" in response.url.lower()
-                ):
-                    print(
-                        "DATA:",
-                        response.status,
-                        content_type,
-                        response.url
-                    )
-
-            page.on(
-                "response",
-                log_response
-            )
+            # --------------------------------------------------
+            # Navigate to the target URL
+            # --------------------------------------------------
 
             print()
             print("===== NAVIGATION =====")
+            print("URL:", url)
 
             response = page.goto(
                 url,
@@ -83,24 +94,49 @@ class BankCrawler:
                 timeout=60_000,
             )
 
-            print(
-                "Initial response:",
-                response.status if response else None
+            status_code = (
+                response.status
+                if response
+                else None
             )
 
             print(
-                "URL:",
+                "Initial response:",
+                status_code
+            )
+
+            print(
+                "Current URL:",
                 page.url
             )
 
+            # --------------------------------------------------
+            # Wait for JavaScript-rendered content
+            # --------------------------------------------------
+            #
+            # Banking websites often load content dynamically.
+            # This gives JavaScript time to render additional
+            # elements before extraction.
+            #
+
             page.wait_for_timeout(10_000)
 
-            # Scroll progressif
+            # --------------------------------------------------
+            # Scroll through the page
+            # --------------------------------------------------
+            #
+            # Some websites use lazy loading.
+            # We simulate a progressive scroll so that images
+            # and other dynamic content have a chance to load.
+            #
+
             print()
             print("===== SCROLLING PAGE =====")
 
-            page.evaluate("""
+            page.evaluate(
+                """
                 async () => {
+
                     await new Promise((resolve) => {
 
                         let totalHeight = 0;
@@ -127,7 +163,11 @@ class BankCrawler:
                         }, delay);
                     });
                 }
-            """)
+                """
+            )
+
+            # Give lazy-loaded elements a little more time
+            # to appear after scrolling.
 
             page.wait_for_timeout(3_000)
 
@@ -140,10 +180,35 @@ class BankCrawler:
                 final_scroll_height
             )
 
-            # Screenshot complet
-            screenshot_dir = Path(
-                "data/screenshots"
-            ) / self.bank_name
+            # --------------------------------------------------
+            # Generate screenshot filename
+            # --------------------------------------------------
+            #
+            # Belgian local time is used.
+            #
+            # Example:
+            #
+            # 2026-09-18_14-37-52_a81f42c9.png
+            #
+            # The URL hash prevents different URLs captured
+            # at the same second from overwriting each other.
+            #
+
+            timestamp = datetime.now(
+                ZoneInfo("Europe/Brussels")
+            ).strftime(
+                "%Y-%m-%d_%H-%M-%S"
+            )
+
+            url_hash = hashlib.sha256(
+                url.encode("utf-8")
+            ).hexdigest()[:8]
+
+            screenshot_dir = (
+                Path("data")
+                / "screenshots"
+                / self.bank_name
+            )
 
             screenshot_dir.mkdir(
                 parents=True,
@@ -151,8 +216,13 @@ class BankCrawler:
             )
 
             screenshot_path = (
-                screenshot_dir / "page_full.png"
+                screenshot_dir
+                / f"{timestamp}_{url_hash}.png"
             )
+
+            # --------------------------------------------------
+            # Save full-page screenshot
+            # --------------------------------------------------
 
             page.screenshot(
                 path=str(screenshot_path),
@@ -160,38 +230,28 @@ class BankCrawler:
             )
 
             print(
-                "Full screenshot:",
+                "Screenshot saved:",
                 screenshot_path
             )
 
-            # Retour en haut
+            # --------------------------------------------------
+            # Return to the top of the page
+            # --------------------------------------------------
+
             page.evaluate(
                 "window.scrollTo(0, 0)"
             )
 
             page.wait_for_timeout(1_000)
 
-            # Etat de la page
-            print()
-            print("===== PAGE STATE =====")
+            # --------------------------------------------------
+            # Retrieve final HTML
+            # --------------------------------------------------
+            #
+            # page.content() gives us the DOM after JavaScript
+            # execution.
+            #
 
-            print(
-                "Title:",
-                page.title()
-            )
-
-            print(
-                "Frames:",
-                len(page.frames)
-            )
-
-            for frame in page.frames:
-                print(
-                    "FRAME:",
-                    frame.url
-                )
-
-            # HTML final
             html = page.content()
 
             print(
@@ -199,68 +259,103 @@ class BankCrawler:
                 len(html)
             )
 
-            # BODY
-            body = page.locator("body")
+            # --------------------------------------------------
+            # Extract structured information
+            # --------------------------------------------------
+            #
+            # Extraction is performed while the Playwright page
+            # is still open.
+            #
 
-            print(
-                "Body exists:",
-                body.count()
-            )
+            extracted = extract_page(page)
 
-            if body.count() > 0:
+            # --------------------------------------------------
+            # Store final URL before closing the browser
+            # --------------------------------------------------
 
-                body_html = body.inner_html()
+            final_url = page.url
 
-                print(
-                    "Body HTML length:",
-                    len(body_html)
-                )
+            # --------------------------------------------------
+            # Close browser session
+            # --------------------------------------------------
 
-                print()
-                print("===== BODY HTML =====")
-
-                print(
-                    body_html[:5_000]
-                )
-
-                print(
-                    "====================="
-                )
-
-                body_text = body.inner_text()
-
-                print()
-                print(
-                    "Visible text length:",
-                    len(body_text)
-                )
-
-                print(
-                    body_text[:3_000]
-                )
-
-            print()
-            print("=====================")
-
+            context.close()
             browser.close()
 
-        return html
+        # ------------------------------------------------------
+        # Return complete crawl result
+        # ------------------------------------------------------
 
-    def process_page(self, url: str):
+        return {
+            "url": final_url,
+            "status_code": status_code,
+            "html": html,
+            "screenshot_path": str(
+                screenshot_path
+            ),
+            "content": extracted,
+        }
 
-        html = self.fetch(url)
+    def process_page(self, url: str) -> dict:
+        """
+        Crawl, store and parse one webpage.
+
+        Workflow:
+
+        1. Fetch and render the webpage with Firefox.
+        2. Save the raw HTML.
+        3. Save the crawl result in SQLite.
+        4. Return the extracted content.
+        """
+
+        result = self.fetch(url)
+
+        # --------------------------------------------------------
+        # SAVE RAW HTML
+        # --------------------------------------------------------
 
         raw = save_raw_html(
             bank=self.bank_name,
             url=url,
-            html=html,
+            html=result["html"],
         )
 
-        extracted = extract_page(html)
+        # --------------------------------------------------------
+        # SAVE DATABASE RECORD
+        # --------------------------------------------------------
+
+        content = result["content"]
+
+        page_id = save_page(
+            bank=self.bank_name,
+            page_url=url,
+            final_url=result["url"],
+            status_code=result["status_code"],
+            title=content["title"],
+            meta_description=content["meta_description"],
+            headings=content["headings"],
+            paragraphs=content["paragraphs"],
+            links=content["links"],
+            images=content["images"],
+            screenshot_path=result["screenshot_path"],
+            raw_html_path=raw["path"],
+            content_hash=raw["content_hash"],
+        )
+
+        print(
+            "Database page ID:",
+            page_id
+        )
+
+        # --------------------------------------------------------
+        # RETURN RESULT
+        # --------------------------------------------------------
 
         return {
-            "url": url,
-            "status_code": 200,
+            "url": result["url"],
+            "status_code": result["status_code"],
             "raw": raw,
-            "content": extracted,
+            "screenshot_path": result["screenshot_path"],
+            "content": content,
+            "page_id": page_id,
         }

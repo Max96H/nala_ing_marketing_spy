@@ -236,3 +236,6 @@ data/processed/
 .DS_Store
 
 discovery/
+
+firefox-win64.zip
+*.zip

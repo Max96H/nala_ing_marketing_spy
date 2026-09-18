@@ -1,7 +1,21 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 import hashlib
 
+
+# ============================================================
+# PROJECT PATH
+# ============================================================
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
+
+
+# ============================================================
+# SAVE RAW HTML
+# ============================================================
 
 def save_raw_html(
     bank: str,
@@ -11,11 +25,7 @@ def save_raw_html(
     """
     Save the raw HTML of a crawled page to disk.
 
-    Purpose:
-    - Keep the original HTML returned by the crawler.
-    - Allow future re-processing without crawling the website again.
-    - Provide a reliable source for debugging and historical comparisons.
-    - Store raw HTML separately from the structured SQLite database.
+    Each crawl creates a separate HTML file.
 
     Storage structure:
 
@@ -23,56 +33,105 @@ def save_raw_html(
         └── raw/
             └── <bank>/
                 └── <YYYY-MM-DD>/
-                    └── <url_hash>.html
+                    └── <timestamp>_<url_hash>.html
 
     Example:
 
-        data/raw/ing/2026-09-16/a81f3e9c4d2b71aa.html
+        data/raw/ing/2026-09-18/
+            2026-09-18_14-37-52_a81f3e9c4d2b71aa.html
 
-    Returns metadata about the stored HTML file.
+    Keeping every crawl allows the project to compare
+    how a marketing page changes over time.
+
+    Returns
+    -------
+    dict
+        Metadata about the stored HTML file.
     """
 
-    # Use a timezone-aware UTC timestamp.
-    # This is preferred over the deprecated/naive datetime.utcnow().
-    timestamp = datetime.now(timezone.utc)
+    # --------------------------------------------------------
+    # Timestamp
+    # --------------------------------------------------------
+    #
+    # Use Belgian local time so that filenames are easy to
+    # understand when reviewing the crawl history.
+    #
 
-    # Generate a deterministic hash from the page URL.
-    # The hash is used as a short and filesystem-safe filename.
+    timestamp = datetime.now(
+        ZoneInfo("Europe/Brussels")
+    )
+
+    timestamp_string = timestamp.strftime(
+        "%Y-%m-%d_%H-%M-%S"
+    )
+
+    # --------------------------------------------------------
+    # URL hash
+    # --------------------------------------------------------
+    #
+    # The URL hash creates a short and filesystem-safe
+    # identifier for the crawled page.
+    #
+
     url_hash = hashlib.sha256(
         url.encode("utf-8")
     ).hexdigest()[:16]
 
-    # Build the directory where the raw HTML will be stored.
-    # Files are organized by bank and retrieval date.
+    # --------------------------------------------------------
+    # Directory
+    # --------------------------------------------------------
+    #
+    # Organize files by bank and crawl date.
+    #
+
     directory = (
-        Path("data")
-        / "raw"
+        RAW_DATA_DIR
         / bank
         / timestamp.strftime("%Y-%m-%d")
     )
 
-    # Create the directory if it does not already exist.
     directory.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    # Create the final HTML file path.
-    path = directory / f"{url_hash}.html"
+    # --------------------------------------------------------
+    # File path
+    # --------------------------------------------------------
 
-    # Save the original HTML content to disk.
+    filename = (
+        f"{timestamp_string}_{url_hash}.html"
+    )
+
+    path = directory / filename
+
+    # --------------------------------------------------------
+    # Save HTML
+    # --------------------------------------------------------
+
     path.write_text(
         html,
         encoding="utf-8",
     )
 
-    # Calculate a hash of the HTML content.
-    # This can later be used to detect page content changes.
+    # --------------------------------------------------------
+    # HTML content hash
+    # --------------------------------------------------------
+    #
+    # This hash represents the actual HTML content.
+    #
+    # It can later be used to determine whether a page has
+    # changed between two crawls.
+    #
+
     content_hash = hashlib.sha256(
         html.encode("utf-8")
     ).hexdigest()
 
-    # Return metadata about the saved page.
+    # --------------------------------------------------------
+    # Return metadata
+    # --------------------------------------------------------
+
     return {
         "url": url,
         "path": str(path),

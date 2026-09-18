@@ -1,3 +1,20 @@
+# ==========================================================
+# BANK CONFIGURATION
+# ==========================================================
+#
+# This file is the single source of truth for bank-specific
+# configuration.
+#
+# The crawler should not contain hard-coded bank names,
+# URLs or keywords.
+#
+# To add a new bank:
+#   1. Add a new section below.
+#   2. Add its URLs to "seeds".
+#   3. No Python crawler file is required.
+#
+# ==========================================================
+
 banks:
 
   # ==========================================================
@@ -8,17 +25,26 @@ banks:
     name: "ING Belgium"
     domain: "ing.be"
 
+    # URLs that should be crawled directly.
+    # These are the starting points for the crawler.
     seeds:
       - "https://www.ing.be/en/individuals/campaign/current-account-free-youth"
 
+    # Sitemap URLs can later be used to discover additional
+    # relevant pages automatically.
     sitemap_urls:
       - "https://www.ing.be/sitemap-cms.xml"
 
+    # Languages available on the bank website.
     languages:
       - en
       - fr
       - nl
 
+    # Keywords that can be used during the discovery phase
+    # to identify pages related to youth/current accounts.
+    #
+    # These are NOT used by the basic crawler yet.
     product_keywords:
       - youth
       - young
@@ -32,15 +58,13 @@ banks:
       - current-account
       - debit-card
 
+    # Keywords used during the discovery phase to exclude
+    # pages that are outside the research scope.
     exclude_keywords:
       - savings
       - investment
       - mortgage
       - insurance
-
-    robots:
-      disallow:
-        - "/video"
 
 
   # ==========================================================
@@ -51,19 +75,23 @@ banks:
     name: "KBC Belgium"
     domain: "kbc.be"
 
+    # Direct URLs to crawl.
     seeds:
       - "https://www.kbc.be/retail/en/products/payments/current-accounts/young-person-s-account.html?zone=topnav"
 
+    # Sitemap URLs for future page discovery.
     sitemap_urls:
       - "https://www.kbc.com/nl.sitemap.xml"
       - "https://www.kbc.com/fr.sitemap.xml"
       - "https://www.kbc.com/en.sitemap.xml"
 
+    # Supported website languages.
     languages:
       - en
       - fr
       - nl
 
+    # Keywords for identifying relevant youth/current-account pages.
     product_keywords:
       - youth
       - young
@@ -79,22 +107,13 @@ banks:
       - payment
       - payments
 
+    # Keywords for excluding unrelated financial products.
     exclude_keywords:
       - savings
       - investment
       - mortgage
       - insurance
       - loan
-
-    robots:
-      disallow:
-        - "/*/$"
-        - "/site/*"
-        - "/PBL/CC028/*"
-        - "*/aemform.iframe.html"
-
-      allow:
-        - "/campaigns/*/$"
 
 
   # ==========================================================
@@ -105,16 +124,20 @@ banks:
     name: "Belfius"
     domain: "belfius.be"
 
+    # Direct URLs to crawl.
     seeds:
       - "https://www.belfius.be/site/retail/fr/produits/paiement/compte-bancaire-pour-jeunes"
 
+    # Sitemap used for future page discovery.
     sitemap_urls:
       - "https://www.belfius.be/sitemap.xml"
 
+    # Supported website languages.
     languages:
       - fr
       - nl
 
+    # Keywords related to youth/current accounts.
     product_keywords:
       - jeune
       - jeunes
@@ -139,6 +162,7 @@ banks:
       - beats
       - beats-new
 
+    # Keywords for excluding unrelated products.
     exclude_keywords:
       - epargne
       - épargne
@@ -155,92 +179,6 @@ banks:
       - hypotheque
       - hypothèque
 
-    robots:
-      disallow:
-        - "/Avanti"
-        - "/Contest"
-        - "/wwwdexiabe/Nl/Particulier/VIADEXIA/Culture/Competitions"
-        - "/wwwdexiabe/Fr/Particulier/VIADEXIA/Culture/Competitions"
-        - "/Home_fr"
-        - "/Home_nl"
-        - "/media"
-        - "/p1"
-        - "/Style_fr"
-        - "/Style_nl"
-        - "/Styles"
-        - "/uwhuis"
-        - "/votremaison"
-        - "/Asp_lib/"
-        - "/charte/"
-        - "/charter/"
-        - "/docs/"
-        - "/NoCMS/Rates"
-        - "/NoCMS/Doccenter"
-        - "/NoCMS/Doccenter/Doc"
-        - "/NoCMS/Doccenter/fr"
-        - "/NoCMS/Doccenter/nl"
-        - "/NoCMS/Documents/papyrus"
-        - "/NoCMS/Documents/PapyrusControlTool"
-        - "/NoCMS/Documents/PapyrusControlTool/fr"
-        - "/NoCMS/Documents/PapyrusControlTool/nl"
-        - "/pdf/"
-        - "/PubliWeb-Informatif/document/"
-        - "/newsletters/"
-        - "/print/"
-        - "/PrintOnDemand/"
-        - "/nl/Common/DOSSIERS/DDNB"
-        - "/Fr/Common/DOSSIERS/DDNB"
-        - "/Private_nl"
-        - "/Private_fr"
-        - "/privatebanking/nl/nextgen/"
-        - "/privatebanking/fr/nextgen/"
-        - "/fr/newsletters"
-        - "/nl/newsletters"
-        - "/Templates"
-        - "/wwwdexiabe/Templates"
-        - "/redirect.asp?id=belfiuspulsestart_fr"
-        - "/redirect.asp?id=belfiuspulsestart_nl"
-        - "/wwwdexiabe/media/part/docu/DexiaCar_conditions_nl.pdf"
-        - "/retail/nl/mijn-belfius/"
-        - "/retail/fr/mon-belfius/"
-        - "/professional/nl/mijn-belfius/"
-        - "/professional/fr/mijn-belfius/"
-        - "/retail/fr/contact/plaintes/Step2/index.aspx"
-        - "/retail/nl/contact/klachten/Step2/index.aspx"
-        - "/retail/fr/contact/plaintes/Step3/index.aspx"
-        - "/retail/nl/contact/klachten/Step3/index.aspx"
-        - "/retail/nl/producten/lenen/kredietsimulator_sea/index.aspx"
-        - "/retail/fr/produits/emprunter/simulateur-credit_sea/index.aspx"
-        - "/retail/fr/produits/emprunter/simulateur-credit_sea/index.aspx?bt_codeClientNeeds=AUTO"
-        - "/retail/nl/producten/lenen/voertuig/autolening_sea/index.aspx"
-        - "/retail/nl/producten/lenen/kredietsimulator_sea/index.aspx?bt_codeClientNeeds=AUTO"
-        - "/retail/fr/produits/emprunter/vehicule/pret-voiture_sea/index.aspx"
-        - "/retail/fr/produits/emprunter/vehicule_sea/index.aspx"
-        - "/common/NL/multimedia/MMDownloadableFile/PressReleases/2014/20140115-Autosalon.pdf"
-        - "/wwwdexiabe/media/part/docu/Prospectus_HomeCredit_NL.pdf"
-        - "/common/NL/multimedia/MMDownloadableFile/PressReleases/2014/20140218-Batibouw.pdf"
-        - "/retail/nl/producten/lenen/voertuig_sea/index.aspx"
-        - "/retail/nl/producten/lenen/voertuig/autolening-eco_sea/index.aspx"
-        - "/retail/fr/produits/emprunter/vehicule/pret-voiture-eco_sea/index.aspx"
-        - "/nocms/charte/20130313_Credit_auto_A4_CV_NL.pdf"
-        - "/retail/nl/producten/lenen/voertuig/autolening/kantoren/index.aspx"
-        - "/retail/fr/produits/emprunter/vehicule/pret-voiture/agences/index.aspx"
-        - "retail/nl/producten/verzekeringen/campagnes/2016/auto/index.aspx"
-        - "retail/fr/produits/assurance/campagnes/2016/auto/index.aspx"
-        - "wwwdexiabe/media/part/docu/DHF_Algemene_voorwaarden.pdf"
-        - "wwwdexiabe/webapplications2/apps/dexia-contest/autosalon/default.aspx"
-        - "/nl/campagnes/tempmsg/index.aspx"
-        - "/fr/campagnes/tempmsg/index.aspx"
-        - "/retail/nl/producten/lenen/voertuig/autolening/kredietsimulator_splashscreen/index.aspx"
-        - "/retail/fr/produits/emprunter/vehicule/pret-voiture/simulateur-credit_splashscreen/index.aspx"
-
-      allow:
-        - "/www.dexia.be/nl/Professional/business"
-        - "/www.dexia.be/fr/Professional/business"
-        - "/www.dexia.be/nl/Professional/corporate"
-        - "/www.dexia.be/fr/Professional/corporate"
-        - "/www.dexia.be/nl/Professional/publicsocial"
-        - "/www.dexia.be/fr/Professional/publicsocial"
 
   # ==========================================================
   # BNP PARIBAS FORTIS
@@ -250,17 +188,21 @@ banks:
     name: "BNP Paribas Fortis"
     domain: "bnpparibasfortis.be"
 
+    # Direct URLs to crawl.
     seeds:
       - "https://www.bnpparibasfortis.be/en/public/individuals/daily-banking/accounts/current-account/youth-account"
 
+    # Sitemap used for future page discovery.
     sitemap_urls:
       - "https://www.bnpparibasfortis.be/sitemap.xml"
 
+    # Supported website languages.
     languages:
       - en
       - fr
       - nl
 
+    # Keywords related to youth/current accounts.
     product_keywords:
       - youth
       - young
@@ -281,6 +223,7 @@ banks:
       - payment
       - payments
 
+    # Keywords for excluding unrelated financial products.
     exclude_keywords:
       - savings
       - investment
@@ -288,20 +231,3 @@ banks:
       - insurance
       - loan
       - credit
-
-    robots:
-      disallow:
-        - "/site/"
-        - "/images/"
-        - "/local/"
-        - "/PAPL-pr01-ws/"
-        - "/PAPL-pr01/"
-        - "/PAPL-pr02/"
-        - "/pas/"
-        - "/promo/"
-        - "/de/*"
-        - "/*.pdf"
-
-      allow:
-        - "/images/favicons/"
-

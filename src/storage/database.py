@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 # ============================================================
@@ -47,7 +48,7 @@ def get_connection():
 
 def init_db():
     """
-    Create all database tables if they do not already exist.
+    Create the database tables if they do not already exist.
     """
 
     connection = get_connection()
@@ -68,103 +69,127 @@ def init_db():
 
             page_url TEXT NOT NULL,
 
-            page_type TEXT,
+            final_url TEXT,
 
-            language TEXT,
+            scrape_timestamp TEXT NOT NULL,
 
-            scrape_date DATE NOT NULL,
+            status_code INTEGER,
 
-            headline TEXT,
+            title TEXT,
 
-            subtitle TEXT,
-
-            tone TEXT,
-
-            value_proposition TEXT,
-
-            has_numeric_offer BOOLEAN,
-
-            cta_text TEXT,
-
-            cta_count INTEGER,
-
-            image_count INTEGER,
-
-            raw_text TEXT,
+            meta_description TEXT,
 
             screenshot_path TEXT,
 
-            source_type TEXT,
+            raw_html_path TEXT,
 
-            UNIQUE (
-                bank,
-                page_url,
-                scrape_date
-            )
+            content_hash TEXT
+
         )
         """
     )
 
     # ========================================================
-    # PAGE COLORS
+    # HEADINGS
     # ========================================================
 
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS page_colors (
+        CREATE TABLE IF NOT EXISTS page_headings (
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
             page_id INTEGER NOT NULL,
 
-            color TEXT NOT NULL,
-
-            rank INTEGER NOT NULL,
+            heading TEXT NOT NULL,
 
             FOREIGN KEY (
                 page_id
             )
             REFERENCES pages(id)
-            ON DELETE CASCADE,
+            ON DELETE CASCADE
 
-            UNIQUE (
-                page_id,
-                color
-            )
         )
         """
     )
 
     # ========================================================
-    # PAGE TOPICS
+    # PARAGRAPHS
     # ========================================================
 
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS page_topics (
+        CREATE TABLE IF NOT EXISTS page_paragraphs (
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
             page_id INTEGER NOT NULL,
 
-            topic TEXT NOT NULL,
+            paragraph TEXT NOT NULL,
 
             FOREIGN KEY (
                 page_id
             )
             REFERENCES pages(id)
-            ON DELETE CASCADE,
+            ON DELETE CASCADE
 
-            UNIQUE (
-                page_id,
-                topic
+        )
+        """
+    )
+
+    # ========================================================
+    # LINKS
+    # ========================================================
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS page_links (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            page_id INTEGER NOT NULL,
+
+            link_text TEXT,
+
+            href TEXT,
+
+            FOREIGN KEY (
+                page_id
             )
+            REFERENCES pages(id)
+            ON DELETE CASCADE
+
+        )
+        """
+    )
+
+    # ========================================================
+    # IMAGES
+    # ========================================================
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS page_images (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            page_id INTEGER NOT NULL,
+
+            src TEXT,
+
+            alt TEXT,
+
+            FOREIGN KEY (
+                page_id
+            )
+            REFERENCES pages(id)
+            ON DELETE CASCADE
+
         )
         """
     )
 
     connection.commit()
-
     connection.close()
 
 
@@ -175,62 +200,61 @@ def init_db():
 def save_page(
     bank,
     page_url,
-    language=None,
-    page_type=None,
-    headline=None,
-    subtitle=None,
-    tone=None,
-    value_proposition=None,
-    has_numeric_offer=None,
-    cta_text=None,
-    cta_count=0,
-    image_count=0,
-    dominant_colors=None,
-    topics=None,
-    raw_text=None,
+    final_url=None,
+    status_code=None,
+    title=None,
+    meta_description=None,
+    headings=None,
+    paragraphs=None,
+    links=None,
+    images=None,
     screenshot_path=None,
-    source_type=None,
-    scrape_date=None,
+    raw_html_path=None,
+    content_hash=None,
+    scrape_timestamp=None,
 ):
     """
-    Save a crawled page.
+    Save one crawl result in SQLite.
 
-    Colors are stored in page_colors.
-    Topics are stored in page_topics.
+    Each crawl is stored as a separate record.
+
+    This is intentional: the project needs to preserve
+    historical versions of marketing pages.
     """
 
     init_db()
 
-    if scrape_date is None:
-        scrape_date = date.today().isoformat()
+    # --------------------------------------------------------
+    # Timestamp
+    # --------------------------------------------------------
+
+    if scrape_timestamp is None:
+
+        scrape_timestamp = datetime.now(
+            ZoneInfo("Europe/Brussels")
+        ).isoformat()
 
     connection = get_connection()
 
     cursor = connection.cursor()
 
-    # ========================================================
-    # SAVE PAGE
-    # ========================================================
+    # --------------------------------------------------------
+    # Save main page record
+    # --------------------------------------------------------
 
     cursor.execute(
         """
         INSERT INTO pages (
             bank,
             page_url,
-            page_type,
-            language,
-            scrape_date,
-            headline,
-            subtitle,
-            tone,
-            value_proposition,
-            has_numeric_offer,
-            cta_text,
-            cta_count,
-            image_count,
-            raw_text,
+            final_url,
+            scrape_timestamp,
+            status_code,
+            title,
+            meta_description,
             screenshot_path,
-            source_type
+            raw_html_path,
+            content_hash
         )
         VALUES (
             ?,
@@ -242,111 +266,109 @@ def save_page(
             ?,
             ?,
             ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
             ?
         )
-        ON CONFLICT (
-            bank,
-            page_url,
-            scrape_date
-        )
-        DO UPDATE SET
-            page_type = excluded.page_type,
-            language = excluded.language,
-            headline = excluded.headline,
-            subtitle = excluded.subtitle,
-            tone = excluded.tone,
-            value_proposition = excluded.value_proposition,
-            has_numeric_offer = excluded.has_numeric_offer,
-            cta_text = excluded.cta_text,
-            cta_count = excluded.cta_count,
-            image_count = excluded.image_count,
-            raw_text = excluded.raw_text,
-            screenshot_path = excluded.screenshot_path,
-            source_type = excluded.source_type
         """,
         (
             bank,
             page_url,
-            page_type,
-            language,
-            scrape_date,
-            headline,
-            subtitle,
-            tone,
-            value_proposition,
-            has_numeric_offer,
-            cta_text,
-            cta_count,
-            image_count,
-            raw_text,
+            final_url,
+            scrape_timestamp,
+            status_code,
+            title,
+            meta_description,
             screenshot_path,
-            source_type,
+            raw_html_path,
+            content_hash,
         ),
     )
 
-    # ========================================================
-    # GET PAGE ID
-    # ========================================================
+    page_id = cursor.lastrowid
 
-    cursor.execute(
-        """
-        SELECT id
-        FROM pages
-        WHERE bank = ?
-        AND page_url = ?
-        AND scrape_date = ?
-        """,
-        (
-            bank,
-            page_url,
-            scrape_date,
-        ),
-    )
+    # --------------------------------------------------------
+    # Save headings
+    # --------------------------------------------------------
 
-    row = cursor.fetchone()
+    if headings:
 
-    if row is None:
-        connection.close()
-        raise RuntimeError(
-            "Could not retrieve page_id after saving page."
-        )
+        for heading in headings:
 
-    page_id = row["id"]
+            if not heading:
+                continue
 
-    # ========================================================
-    # SAVE COLORS
-    # ========================================================
+            heading = str(
+                heading
+            ).strip()
 
-    cursor.execute(
-        """
-        DELETE FROM page_colors
-        WHERE page_id = ?
-        """,
-        (page_id,),
-    )
-
-    if dominant_colors:
-
-        for rank, color in enumerate(
-            dominant_colors,
-            start=1,
-        ):
-
-            if not color:
+            if not heading:
                 continue
 
             cursor.execute(
                 """
-                INSERT INTO page_colors (
+                INSERT INTO page_headings (
                     page_id,
-                    color,
-                    rank
+                    heading
+                )
+                VALUES (
+                    ?,
+                    ?
+                )
+                """,
+                (
+                    page_id,
+                    heading,
+                ),
+            )
+
+    # --------------------------------------------------------
+    # Save paragraphs
+    # --------------------------------------------------------
+
+    if paragraphs:
+
+        for paragraph in paragraphs:
+
+            if not paragraph:
+                continue
+
+            paragraph = str(
+                paragraph
+            ).strip()
+
+            if not paragraph:
+                continue
+
+            cursor.execute(
+                """
+                INSERT INTO page_paragraphs (
+                    page_id,
+                    paragraph
+                )
+                VALUES (
+                    ?,
+                    ?
+                )
+                """,
+                (
+                    page_id,
+                    paragraph,
+                ),
+            )
+
+    # --------------------------------------------------------
+    # Save links
+    # --------------------------------------------------------
+
+    if links:
+
+        for link in links:
+
+            cursor.execute(
+                """
+                INSERT INTO page_links (
+                    page_id,
+                    link_text,
+                    href
                 )
                 VALUES (
                     ?,
@@ -356,58 +378,44 @@ def save_page(
                 """,
                 (
                     page_id,
-                    color,
-                    rank,
+                    link.get("text"),
+                    link.get("href"),
                 ),
             )
 
-    # ========================================================
-    # SAVE TOPICS
-    # ========================================================
+    # --------------------------------------------------------
+    # Save images
+    # --------------------------------------------------------
 
-    cursor.execute(
-        """
-        DELETE FROM page_topics
-        WHERE page_id = ?
-        """,
-        (page_id,),
-    )
+    if images:
 
-    if topics:
-
-        for topic in topics:
-
-            if not topic:
-                continue
-
-            topic = str(topic).strip()
-
-            if not topic:
-                continue
+        for image in images:
 
             cursor.execute(
                 """
-                INSERT OR IGNORE INTO page_topics (
+                INSERT INTO page_images (
                     page_id,
-                    topic
+                    src,
+                    alt
                 )
                 VALUES (
+                    ?,
                     ?,
                     ?
                 )
                 """,
                 (
                     page_id,
-                    topic,
+                    image.get("src"),
+                    image.get("alt"),
                 ),
             )
 
-    # ========================================================
-    # COMMIT
-    # ========================================================
+    # --------------------------------------------------------
+    # Commit
+    # --------------------------------------------------------
 
     connection.commit()
-
     connection.close()
 
     return page_id
@@ -419,16 +427,16 @@ def save_page(
 
 def get_page(page_id):
     """
-    Return one page with its colors and topics.
+    Return one page and its extracted content.
     """
 
     connection = get_connection()
 
     cursor = connection.cursor()
 
-    # ========================================================
-    # PAGE
-    # ========================================================
+    # --------------------------------------------------------
+    # Main page
+    # --------------------------------------------------------
 
     cursor.execute(
         """
@@ -445,91 +453,95 @@ def get_page(page_id):
         connection.close()
         return None
 
-    # ========================================================
-    # COLORS
-    # ========================================================
+    # --------------------------------------------------------
+    # Headings
+    # --------------------------------------------------------
 
     cursor.execute(
         """
-        SELECT color, rank
-        FROM page_colors
+        SELECT heading
+        FROM page_headings
         WHERE page_id = ?
-        ORDER BY rank ASC
+        ORDER BY id ASC
         """,
         (page_id,),
     )
 
-    colors = cursor.fetchall()
+    headings = [
+        row["heading"]
+        for row in cursor.fetchall()
+    ]
 
-    # ========================================================
-    # TOPICS
-    # ========================================================
+    # --------------------------------------------------------
+    # Paragraphs
+    # --------------------------------------------------------
 
     cursor.execute(
         """
-        SELECT topic
-        FROM page_topics
+        SELECT paragraph
+        FROM page_paragraphs
         WHERE page_id = ?
-        ORDER BY topic ASC
+        ORDER BY id ASC
         """,
         (page_id,),
     )
 
-    topics = cursor.fetchall()
+    paragraphs = [
+        row["paragraph"]
+        for row in cursor.fetchall()
+    ]
+
+    # --------------------------------------------------------
+    # Links
+    # --------------------------------------------------------
+
+    cursor.execute(
+        """
+        SELECT link_text, href
+        FROM page_links
+        WHERE page_id = ?
+        ORDER BY id ASC
+        """,
+        (page_id,),
+    )
+
+    links = [
+        dict(row)
+        for row in cursor.fetchall()
+    ]
+
+    # --------------------------------------------------------
+    # Images
+    # --------------------------------------------------------
+
+    cursor.execute(
+        """
+        SELECT src, alt
+        FROM page_images
+        WHERE page_id = ?
+        ORDER BY id ASC
+        """,
+        (page_id,),
+    )
+
+    images = [
+        dict(row)
+        for row in cursor.fetchall()
+    ]
 
     connection.close()
+
+    # --------------------------------------------------------
+    # Return complete page
+    # --------------------------------------------------------
 
     return {
         "page": dict(page),
-        "colors": [
-            dict(color)
-            for color in colors
-        ],
-        "topics": [
-            topic["topic"]
-            for topic in topics
-        ],
+        "headings": headings,
+        "paragraphs": paragraphs,
+        "links": links,
+        "images": images,
     }
-
-
-# ============================================================
-# GET PAGE HISTORY
-# ============================================================
-
-def get_page_history(
-    bank,
-    page_url,
-):
-    """
-    Return the complete scraping history of a page.
-    """
-
-    connection = get_connection()
-
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        SELECT *
-        FROM pages
-        WHERE bank = ?
-        AND page_url = ?
-        ORDER BY scrape_date DESC
-        """,
-        (
-            bank,
-            page_url,
-        ),
-    )
-
-    rows = cursor.fetchall()
-
-    connection.close()
-
-    return [
-        dict(row)
-        for row in rows
-    ]
 
 
 # ============================================================
@@ -549,7 +561,7 @@ def get_all_pages():
         """
         SELECT *
         FROM pages
-        ORDER BY scrape_date DESC
+        ORDER BY scrape_timestamp DESC
         """
     )
 
@@ -564,12 +576,15 @@ def get_all_pages():
 
 
 # ============================================================
-# GET PAGE COLORS
+# GET PAGE HISTORY
 # ============================================================
 
-def get_page_colors(page_id):
+def get_page_history(
+    bank,
+    page_url,
+):
     """
-    Return all dominant colors for a page.
+    Return the complete crawl history of one page.
     """
 
     connection = get_connection()
@@ -578,80 +593,16 @@ def get_page_colors(page_id):
 
     cursor.execute(
         """
-        SELECT color, rank
-        FROM page_colors
-        WHERE page_id = ?
-        ORDER BY rank ASC
-        """,
-        (page_id,),
-    )
-
-    rows = cursor.fetchall()
-
-    connection.close()
-
-    return [
-        dict(row)
-        for row in rows
-    ]
-
-
-# ============================================================
-# GET PAGE TOPICS
-# ============================================================
-
-def get_page_topics(page_id):
-    """
-    Return all topics for a page.
-    """
-
-    connection = get_connection()
-
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        SELECT topic
-        FROM page_topics
-        WHERE page_id = ?
-        ORDER BY topic ASC
-        """,
-        (page_id,),
-    )
-
-    rows = cursor.fetchall()
-
-    connection.close()
-
-    return [
-        row["topic"]
-        for row in rows
-    ]
-
-
-# ============================================================
-# GET PAGES BY TOPIC
-# ============================================================
-
-def get_pages_by_topic(topic):
-    """
-    Return all pages associated with a topic.
-    """
-
-    connection = get_connection()
-
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        SELECT pages.*
+        SELECT *
         FROM pages
-        INNER JOIN page_topics
-            ON page_topics.page_id = pages.id
-        WHERE page_topics.topic = ?
-        ORDER BY pages.scrape_date DESC
+        WHERE bank = ?
+        AND page_url = ?
+        ORDER BY scrape_timestamp DESC
         """,
-        (topic,),
+        (
+            bank,
+            page_url,
+        ),
     )
 
     rows = cursor.fetchall()
@@ -665,12 +616,12 @@ def get_pages_by_topic(topic):
 
 
 # ============================================================
-# PRINT DATABASE
+# PRINT ALL PAGES
 # ============================================================
 
 def print_all_pages():
     """
-    Display pages, colors and topics.
+    Display all crawled pages.
     """
 
     pages = get_all_pages()
@@ -686,64 +637,29 @@ def print_all_pages():
         print(f"ID: {page['id']}")
         print(f"Bank: {page['bank']}")
         print(f"URL: {page['page_url']}")
-        print(f"Page type: {page['page_type']}")
-        print(f"Language: {page['language']}")
-        print(f"Scrape date: {page['scrape_date']}")
-        print(f"Headline: {page['headline']}")
-        print(f"Subtitle: {page['subtitle']}")
-        print(f"Tone: {page['tone']}")
+        print(f"Final URL: {page['final_url']}")
+        print(f"Status: {page['status_code']}")
         print(
-            f"Value proposition: "
-            f"{page['value_proposition']}"
+            f"Scraped at: "
+            f"{page['scrape_timestamp']}"
         )
+        print(f"Title: {page['title']}")
         print(
-            f"Numeric offer: "
-            f"{page['has_numeric_offer']}"
+            f"Meta description: "
+            f"{page['meta_description']}"
         )
-        print(f"CTA: {page['cta_text']}")
-        print(f"CTA count: {page['cta_count']}")
-        print(f"Image count: {page['image_count']}")
         print(
             f"Screenshot: "
             f"{page['screenshot_path']}"
         )
         print(
-            f"Source type: "
-            f"{page['source_type']}"
+            f"Raw HTML: "
+            f"{page['raw_html_path']}"
         )
-
-        # ----------------------------------------------------
-        # COLORS
-        # ----------------------------------------------------
-
-        colors = get_page_colors(
-            page["id"]
+        print(
+            f"Content hash: "
+            f"{page['content_hash']}"
         )
-
-        print("Colors:")
-
-        for color in colors:
-
-            print(
-                f"  {color['rank']}. "
-                f"{color['color']}"
-            )
-
-        # ----------------------------------------------------
-        # TOPICS
-        # ----------------------------------------------------
-
-        topics = get_page_topics(
-            page["id"]
-        )
-
-        print("Topics:")
-
-        for topic in topics:
-
-            print(
-                f"  - {topic}"
-            )
 
     print()
     print("==============================")

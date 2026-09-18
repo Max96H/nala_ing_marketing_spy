@@ -1,15 +1,51 @@
+# ==========================================================
+# RESEARCH SCOPE
+# ==========================================================
+#
+# This file defines the functional scope of the research.
+#
+# It is intentionally separated from banks.yaml:
+#
+# - banks.yaml    -> bank-specific configuration
+# - features.yaml -> research/product scope
+#
+# This file is not used directly by the crawler yet.
+# It can later be used by the discovery or analysis steps.
+#
+# ==========================================================
+
 product_scope:
+
+  # ----------------------------------------------------------
+  # Products directly included in the research
+  # ----------------------------------------------------------
 
   included:
     - youth_current_account
     - minor_current_account
     - child_current_account
 
+
+  # ----------------------------------------------------------
+  # Features related to the products being studied
+  #
+  # These may be analysed when they appear on a relevant
+  # current-account page.
+  # ----------------------------------------------------------
+
   related:
     - youth_debit_card
     - parental_controls
     - youth_mobile_banking
     - youth_payment_features
+
+
+  # ----------------------------------------------------------
+  # Products explicitly excluded from the research
+  #
+  # This prevents the project from mixing youth current
+  # accounts with other financial products.
+  # ----------------------------------------------------------
 
   excluded:
     - savings_account
