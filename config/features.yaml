@@ -1,0 +1,18 @@
+product_scope:
+
+  included:
+    - youth_current_account
+    - minor_current_account
+    - child_current_account
+
+  related:
+    - youth_debit_card
+    - parental_controls
+    - youth_mobile_banking
+    - youth_payment_features
+
+  excluded:
+    - savings_account
+    - investment_account
+    - mortgage
+    - insurance

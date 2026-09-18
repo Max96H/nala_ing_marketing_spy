@@ -1,0 +1,22 @@
+[project]
+name = "nala_ing_marketing_spy"
+version = "0.1.0"
+description = "Reusable framework for collecting and comparing banking campaigns"
+requires-python = ">=3.11"
+
+dependencies = [
+    "scrapy",
+    "beautifulsoup4",
+    "lxml",
+    "pyyaml",
+    "pandas",
+    "pyarrow",
+    "duckdb",
+    "requests"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff"
+]
