@@ -10,5 +10,9 @@ banks = {
     "ing": {
         "outpath": "ing_youth_account",
         "url": "https://www.ing.be/en/individuals/campaign/current-account-free-youth"
+    },
+    "belfius": {
+        "outpath": "belfius_youth_account",
+        "url": "https://www.belfius.be/site/retail/fr/produits/paiement/compte-bancaire-pour-jeunes"
     }
 }
