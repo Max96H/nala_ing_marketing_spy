@@ -1,54 +1,86 @@
 import re
 import sqlite3
 from playwright.sync_api import sync_playwright
+from collections import Counter
+from PIL import Image
 
-URL = "https://www.bnpparibasfortis.be/en/public/individuals/daily-banking/accounts/current-account/youth-account"
-
-
-def rgb_to_hex(rgb_str):
-    """Converts 'rgb(r, g, b)' or 'rgba(r, g, b, a)' strings to HEX format (#RRGGBB)."""
-    nums = re.findall(r"\d+", rgb_str)
-    if len(nums) >= 3:
-        r, g, b = map(int, nums[:3])
-        return f"#{r:02x}{g:02x}{b:02x}".upper()
-    return None
-
-
-def extract_page_colors(page):
-    """Extracts unique visible colors from all DOM elements on the page."""
-    # Execute JS in the browser to collect all computed text and background colors
-    raw_colors = page.evaluate(
+def extract_dominant_colors(
+        screenshot_path: str | None,
+        color_count: int = 5,
+    ) -> list[str]:
         """
-        () => {
-            const colors = new Set();
-            const elements = document.querySelectorAll('body *');
+        Extract dominant colors from the screenshot.
 
-            elements.forEach(el => {
-                const style = window.getComputedStyle(el);
-                
-                // Filter out fully transparent backgrounds (rgba(0, 0, 0, 0))
-                if (style.color && style.color !== 'rgba(0, 0, 0, 0)') {
-                    colors.add(style.color);
-                }
-                if (style.backgroundColor && style.backgroundColor !== 'rgba(0, 0, 0, 0)') {
-                    colors.add(style.backgroundColor);
-                }
-            });
+        Returns hexadecimal values such as:
+            ['#ffffff', '#ff6200', '#000000']
+        """
 
-            return Array.from(colors);
-        }
-    """
-    )
+        # No screenshot means no color analysis is possible.
+        if not screenshot_path:
+            return []
 
-    # Convert RGB/RGBA values to HEX and deduplicate
-    hex_colors = set()
-    for color in raw_colors:
-        hex_val = rgb_to_hex(color)
-        if hex_val:
-            hex_colors.add(hex_val)
+        try:
 
-    return list(hex_colors)
+            # Open the screenshot using Pillow.
+            image = Image.open(
+                screenshot_path
+            )
 
+            # Use RGB for consistent color processing.
+            image = image.convert(
+                "RGB"
+            )
+
+            # Reduce the image size to make the analysis faster.
+            image.thumbnail(
+                (800, 800)
+            )
+
+            # Reduce the number of colors to a manageable palette.
+            quantized = image.quantize(
+                colors=32
+            ).convert(
+                "RGB"
+            )
+
+            pixels = list(
+                quantized.getdata()
+            )
+
+            # Count how frequently each RGB color appears.
+            counter = Counter(
+                pixels
+            )
+
+            dominant_colors = []
+
+            # Keep the most frequent colors.
+            for rgb, _count in counter.most_common(
+                color_count
+            ):
+
+                hex_color = (
+                    "#{:02x}{:02x}{:02x}".format(
+                        rgb[0],
+                        rgb[1],
+                        rgb[2],
+                    )
+                )
+
+                dominant_colors.append(
+                    hex_color
+                )
+
+            return dominant_colors
+
+        except Exception as e:
+
+            print(
+                "COLOR EXTRACTION ERROR:",
+                e,
+            )
+
+            return []
 
 def save_colors_to_sqlite(page_url, color_list, db_path="./data/bank_analysis.db"):
     """Inserts extracted colors into the page_colors junction table."""
@@ -87,38 +119,3 @@ def save_colors_to_sqlite(page_url, color_list, db_path="./data/bank_analysis.db
     print(
         f"Successfully inserted {len(color_records)} colors for page ID {page_id} into 'page_colors'."
     )
-
-
-def run():
-    with sync_playwright() as p:
-        browser = p.firefox.launch(headless=True)
-        context = browser.new_context(
-            viewport={"width": 1920, "height": 1080}, locale="en-US"
-        )
-        page = context.new_page()
-
-        print(f"Navigating to {URL}...")
-        page.goto(URL, wait_until="networkidle")
-
-        # Handle cookie banner to prevent overlay colors from skewing results
-        cookie_trigger = page.locator(
-            '#cookies_all_accept_btn, button:has-text("Accept"), a:has-text("Accept")'
-        ).first
-        if cookie_trigger.is_visible():
-            cookie_trigger.click()
-            page.wait_for_timeout(1000)
-
-        # Extract & process colors
-        unique_hex_colors = extract_page_colors(page)
-
-        print("\nExtracted Unique HEX Colors:")
-        print(unique_hex_colors)
-
-        # Save to database
-        save_colors_to_sqlite(URL, unique_hex_colors)
-
-        browser.close()
-
-
-if __name__ == "__main__":
-    run()

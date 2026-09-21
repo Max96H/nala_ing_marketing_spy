@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 from config import banks
-from src.extract_colors import extract_page_colors, save_colors_to_sqlite
+from src.extract_colors import extract_dominant_colors, save_colors_to_sqlite
 from src.cookies import handle_cookie_banner
 from src.insertion_db import save_to_sqlite
 from src.html_scraper import extract_marketing_data
@@ -81,7 +81,7 @@ def main():
                 # Save record
                 save_to_sqlite(url, bank, scraped_data)
 
-                unique_hex_colors = extract_page_colors(page)
+                unique_hex_colors = extract_dominant_colors(f"./screenshots/{outpath}_design.png")
                 print("\nExtracted Unique HEX Colors:")
                 print(unique_hex_colors)
 
