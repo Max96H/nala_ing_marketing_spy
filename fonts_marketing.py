@@ -11,7 +11,7 @@ DB_NAME = "marketing_spy.db"
 
 
 # ------------------------------------------------------------
-# EXTRACTION DES ÉLÉMENTS VISUELS IMPORTANTS
+# EXTRACTION OF IMPORTANT VISUAL ELEMENT
 # ------------------------------------------------------------
 
 def extract_visual_elements(page):
@@ -54,7 +54,7 @@ def extract_visual_elements(page):
 
 
 # ------------------------------------------------------------
-# CREATION DE LA BASE SQL
+# CREATION OF THE SQL BASE
 # ------------------------------------------------------------
 
 def create_database():
@@ -99,7 +99,7 @@ def create_database():
 
 
 # ------------------------------------------------------------
-# INSERTION DES DONNÉES
+# DATA INSERTION
 # ------------------------------------------------------------
 
 def save_to_database(connection, page_url, elements):
@@ -176,7 +176,7 @@ def scrape_page(url):
 
 
 # ------------------------------------------------------------
-# PROGRAMME PRINCIPAL
+# MAIN PROGRAM
 # ------------------------------------------------------------
 
 if __name__ == "__main__":
