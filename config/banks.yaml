@@ -1,0 +1,241 @@
+# ==========================================================
+# BANK CONFIGURATION
+# ==========================================================
+#
+# This file is the single source of truth for bank-specific
+# configuration.
+#
+# The crawler should not contain hard-coded bank names,
+# URLs or keywords.
+#
+# To add a new bank:
+#   1. Add a new section below.
+#   2. Add its URLs to "seeds".
+#   3. No Python crawler file is required.
+#
+# ==========================================================
+
+banks:
+
+  # ==========================================================
+  # ING
+  # ==========================================================
+
+  ing:
+    name: "ING Belgium"
+    domain: "ing.be"
+    outpaths:
+      - "ing_youth_account"
+
+    # URLs that should be crawled directly.
+    # These are the starting points for the crawler.
+    seeds:
+      - "https://www.ing.be/en/individuals/campaign/current-account-free-youth"
+
+    # Sitemap URLs can later be used to discover additional
+    # relevant pages automatically.
+    sitemap_urls:
+      - "https://www.ing.be/sitemap-cms.xml"
+
+    # Languages available on the bank website.
+    languages:
+      - en
+      - fr
+      - nl
+
+    # Keywords that can be used during the discovery phase
+    # to identify pages related to youth/current accounts.
+    #
+    # These are NOT used by the basic crawler yet.
+    product_keywords:
+      - youth
+      - young
+      - child
+      - children
+      - kid
+      - kids
+      - junior
+      - minor
+      - account
+      - current-account
+      - debit-card
+
+    # Keywords used during the discovery phase to exclude
+    # pages that are outside the research scope.
+    exclude_keywords:
+      - savings
+      - investment
+      - mortgage
+      - insurance
+
+
+  # ==========================================================
+  # KBC
+  # ==========================================================
+
+  kbc:
+    name: "KBC Belgium"
+    domain: "kbc.be"
+    outpaths:
+      - "kbc_youth_account"
+
+    # Direct URLs to crawl.
+    seeds:
+      - "https://www.kbc.be/retail/en/products/payments/current-accounts/young-person-s-account.html?zone=topnav"
+
+    # Sitemap URLs for future page discovery.
+    sitemap_urls:
+      - "https://www.kbc.com/nl.sitemap.xml"
+      - "https://www.kbc.com/fr.sitemap.xml"
+      - "https://www.kbc.com/en.sitemap.xml"
+
+    # Supported website languages.
+    languages:
+      - en
+      - fr
+      - nl
+
+    # Keywords for identifying relevant youth/current-account pages.
+    product_keywords:
+      - youth
+      - young
+      - child
+      - children
+      - kid
+      - kids
+      - junior
+      - minor
+      - account
+      - current-account
+      - debit-card
+      - payment
+      - payments
+
+    # Keywords for excluding unrelated financial products.
+    exclude_keywords:
+      - savings
+      - investment
+      - mortgage
+      - insurance
+      - loan
+
+
+  # ==========================================================
+  # BELFIUS
+  # ==========================================================
+
+  belfius:
+    name: "Belfius"
+    domain: "belfius.be"
+    outpaths:
+      - "belfius_youth_account"
+
+    # Direct URLs to crawl.
+    seeds:
+      - "https://www.belfius.be/site/retail/fr/produits/paiement/compte-bancaire-pour-jeunes"
+
+    # Sitemap used for future page discovery.
+    sitemap_urls:
+      - "https://www.belfius.be/sitemap.xml"
+
+    # Supported website languages.
+    languages:
+      - fr
+      - nl
+
+    # Keywords related to youth/current accounts.
+    product_keywords:
+      - jeune
+      - jeunes
+      - youth
+      - young
+      - enfant
+      - enfants
+      - child
+      - children
+      - junior
+      - minor
+      - moins-de-25
+      - moins-de-25-ans
+      - compte
+      - compte-bancaire
+      - compte-de-paiement
+      - paiement
+      - paiements
+      - carte
+      - carte-de-debit
+      - carte-de-paiement
+      - beats
+      - beats-new
+
+    # Keywords for excluding unrelated products.
+    exclude_keywords:
+      - epargne
+      - épargne
+      - savings
+      - investissement
+      - investment
+      - pret
+      - prêt
+      - credit
+      - crédit
+      - assurance
+      - insurance
+      - mortgage
+      - hypotheque
+      - hypothèque
+
+
+  # ==========================================================
+  # BNP PARIBAS FORTIS
+  # ==========================================================
+
+  bnp:
+    name: "BNP Paribas Fortis"
+    domain: "bnpparibasfortis.be"
+    outpaths:
+      - "bnp_youth_account"
+
+    # Direct URLs to crawl.
+    seeds:
+      - "https://www.bnpparibasfortis.be/en/public/individuals/daily-banking/accounts/current-account/youth-account"
+
+    # Sitemap used for future page discovery.
+    sitemap_urls:
+      - "https://www.bnpparibasfortis.be/sitemap.xml"
+
+    # Supported website languages.
+    languages:
+      - en
+      - fr
+      - nl
+
+    # Keywords related to youth/current accounts.
+    product_keywords:
+      - youth
+      - young
+      - youth-account
+      - young-account
+      - child
+      - children
+      - kid
+      - kids
+      - junior
+      - minor
+      - teenager
+      - teen
+      - account
+      - current-account
+      - current-account/youth
+      - debit-card
+      - payment
+      - payments
+
+    # Keywords for excluding unrelated financial products.
+    exclude_keywords:
+      - savings
+      - investment
+      - mortgage
+      - insurance
+      - loan
+      - credit
