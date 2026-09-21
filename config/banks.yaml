@@ -37,6 +37,10 @@ banks:
     sitemap_urls:
       - "https://www.ing.be/sitemap-cms.xml"
 
+    sitemap_roots:
+      - "https://www.ing.be/en/individuals/"
+      - "https://www.ing.be/en/business/"
+
     # Languages available on the bank website.
     languages:
       - en
@@ -137,6 +141,12 @@ banks:
     # Sitemap used for future page discovery.
     sitemap_urls:
       - "https://www.belfius.be/sitemap.xml"
+      - "https://www.belfius.be/professional/fr/googlesitemap.xml"
+      - "https://www.belfius.be/privatebanking/fr/googlesitemap.xml"
+      - "https://www.belfius.be/retail/fr/googlesitemap.xml"
+      - "https://www.belfius.be/site/retail/fr/sitemap.xml"
+      - "https://www.belfius.be/site/professional/fr/sitemap.xml"
+      
 
     # Supported website languages.
     languages:
@@ -203,6 +213,10 @@ banks:
     # Sitemap used for future page discovery.
     sitemap_urls:
       - "https://www.bnpparibasfortis.be/sitemap.xml"
+
+    sitemap_roots:
+        - "https://www.bnpparibasfortis.be/en/public/individuals/"
+        - "https://www.bnpparibasfortis.be/en/public/entrepreneurs/"
 
     # Supported website languages.
     languages:
