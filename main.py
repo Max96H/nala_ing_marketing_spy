@@ -8,7 +8,7 @@ import yaml
 from pathlib import Path
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parent
 CONFIG_PATH = PROJECT_ROOT / "config" / "banks.yaml"
 
 def load_bank_config():
@@ -85,56 +85,59 @@ def main():
         browser = p.firefox.launch(headless=True)
 
         for bank, dic in selected_banks.items():
-            url = dic["url"]
-            outpath = dic["outpath"]
+            b = banks.get(bank)
+            urls = b.get("seeds")
+            outpaths = b.get("outpaths")
+            for i, url in enumerate(urls):
+                outpath = outpaths[i]
 
-            context = browser.new_context(
-                viewport={"width": 1920, "height": 1080}, locale="en-US"
-            )
-            page = context.new_page()
+                context = browser.new_context(
+                    viewport={"width": 1920, "height": 1080}, locale="en-US"
+                )
+                page = context.new_page()
 
-            try:
+                try:
 
-                print(f"\n--- Navigating to {url} ---")
-                page.goto(url, wait_until="networkidle")
+                    print(f"\n--- Navigating to {url} ---")
+                    page.goto(url, wait_until="networkidle")
 
-                if "/maintenance" in (link:=page.url):
-                    print("Redirected to maintenance page. url :", link)
-                    browser.close()
-                    return
-                print("Found :", link)
+                    if "/maintenance" in (link:=page.url):
+                        print("Redirected to maintenance page. url :", link)
+                        browser.close()
+                        return
+                    print("Found :", link)
 
-                handle_cookie_banner(page)
+                    handle_cookie_banner(page)
 
-                print("Page loaded successfully:", page.title())
-                page.screenshot(path=f"./screenshots/{outpath}_design.png", full_page=True)
+                    print("Page loaded successfully:", page.title())
+                    page.screenshot(path=f"./screenshots/{outpath}_design.png", full_page=True)
 
-                # Extract targeted marketing fields
-                scraped_data = extract_marketing_data(page)
+                    # Extract targeted marketing fields
+                    scraped_data = extract_marketing_data(page)
 
-                # Output preview to console
-                print("\n--- Extracted Marketing Data ---")
-                for key, val in scraped_data.items():
-                    if key == "raw_text":
-                        print(f"{key}: {val[:120]}... (truncated)")
-                    else:
-                        print(f"{key}: {val}")
+                    # Output preview to console
+                    print("\n--- Extracted Marketing Data ---")
+                    for key, val in scraped_data.items():
+                        if key == "raw_text":
+                            print(f"{key}: {val[:120]}... (truncated)")
+                        else:
+                            print(f"{key}: {val}")
 
-                # Save record
-                save_to_sqlite(url, bank, scraped_data)
+                    # Save record
+                    save_to_sqlite(url, bank, scraped_data)
 
-                unique_hex_colors = extract_dominant_colors(f"./screenshots/{outpath}_design.png")
-                print("\nExtracted Unique HEX Colors:")
-                print(unique_hex_colors)
+                    unique_hex_colors = extract_dominant_colors(f"./screenshots/{outpath}_design.png")
+                    print("\nExtracted Unique HEX Colors:")
+                    print(unique_hex_colors)
 
-                # Save to database
-                save_colors_to_sqlite(url, unique_hex_colors)
+                    # Save to database
+                    save_colors_to_sqlite(url, unique_hex_colors)
 
-            except Exception as e:
-                print(f"Failed to scrape {url}: {e}")
+                except Exception as e:
+                    print(f"Failed to scrape {url}: {e}")
 
-            finally:
-                context.close()
+                finally:
+                    context.close()
 
         browser.close()
 

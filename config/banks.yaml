@@ -24,7 +24,8 @@ banks:
   ing:
     name: "ING Belgium"
     domain: "ing.be"
-    outpath: "ing_youth_account"
+    outpaths:
+      - "ing_youth_account"
 
     # URLs that should be crawled directly.
     # These are the starting points for the crawler.
@@ -75,7 +76,8 @@ banks:
   kbc:
     name: "KBC Belgium"
     domain: "kbc.be"
-    outpath: "kbc_youth_account"
+    outpaths:
+      - "kbc_youth_account"
 
     # Direct URLs to crawl.
     seeds:
@@ -125,7 +127,8 @@ banks:
   belfius:
     name: "Belfius"
     domain: "belfius.be"
-    outpath: "belfius_youth_account"
+    outpaths:
+      - "belfius_youth_account"
 
     # Direct URLs to crawl.
     seeds:
@@ -190,7 +193,8 @@ banks:
   bnp:
     name: "BNP Paribas Fortis"
     domain: "bnpparibasfortis.be"
-    outpath: "bnp_youth_account"
+    outpaths:
+      - "bnp_youth_account"
 
     # Direct URLs to crawl.
     seeds:
