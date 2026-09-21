@@ -1,11 +1,15 @@
 from playwright.sync_api import sync_playwright
-from config import banks
 from src.extract_colors import extract_dominant_colors, save_colors_to_sqlite
 from src.cookies import handle_cookie_banner
 from src.insertion_db import save_to_sqlite
 from src.html_scraper import extract_marketing_data
 import argparse
-import yaml
+import yaml 
+from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CONFIG_PATH = PROJECT_ROOT / "config" / "banks.yaml"
 
 def load_bank_config():
     """
@@ -42,7 +46,7 @@ def load_bank_config():
 
     return banks
 
-def parse_arguments():
+def parse_arguments(banks):
     """Parses command-line arguments for targeting specific banks."""
     parser = argparse.ArgumentParser(
         description="Scrape bank marketing pages and save design/content data to SQLite."
@@ -64,7 +68,9 @@ def parse_arguments():
     return parser.parse_args()
 
 def main():
-    args = parse_arguments()
+
+    banks = load_bank_config()
+    args = parse_arguments(banks)
 
     # Filter the banks dictionary based on user selection
     selected_banks = {
