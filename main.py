@@ -5,6 +5,42 @@ from src.cookies import handle_cookie_banner
 from src.insertion_db import save_to_sqlite
 from src.html_scraper import extract_marketing_data
 import argparse
+import yaml
+
+def load_bank_config():
+    """
+    Load all bank configurations from banks.yaml.
+
+    The YAML file is the central configuration source for
+    the multi-bank crawler.
+    """
+
+    if not CONFIG_PATH.exists():
+        raise FileNotFoundError(
+            f"Bank configuration not found: {CONFIG_PATH}"
+        )
+
+    with open(
+        CONFIG_PATH,
+        "r",
+        encoding="utf-8",
+    ) as file:
+
+        config = yaml.safe_load(file)
+
+    if not config:
+        raise ValueError(
+            "banks.yaml is empty."
+        )
+
+    banks = config.get("banks")
+
+    if not banks:
+        raise ValueError(
+            "No 'banks' section found in banks.yaml."
+        )
+
+    return banks
 
 def parse_arguments():
     """Parses command-line arguments for targeting specific banks."""
