@@ -58,7 +58,7 @@ def run(selected_banks: dict) -> None:
         browser = p.firefox.launch(headless=True)
 
         for bank, config in selected_banks.items():
-            urls = config.get("seeds")
+            urls = config.get("sitemap_links")
             outpaths = config.get("outpaths")
 
             for i, url in enumerate(urls):
