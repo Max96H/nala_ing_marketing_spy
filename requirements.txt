@@ -5,8 +5,6 @@ groq
 python-dotenv
 pandas
 scikit-learn
-plotly
-streamlit
 fastapi
 uvicorn
 PyYAML
