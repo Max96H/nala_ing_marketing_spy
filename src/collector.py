@@ -28,6 +28,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from colorthief import ColorThief
 from playwright.sync_api import sync_playwright
+import yaml
 
 USER_AGENT = "ING-CampaignComparator-Bootcamp/1.0 (+student research project)"
 SCREENSHOT_DIR = Path("screenshots")
@@ -87,16 +88,123 @@ def extract_dominant_colors(image_path: Path, count: int = 4) -> str:
         return ""
 
 
+#J'ai rajouté
+
+def scroll_page_to_bottom(page):
+    """
+    Scroll progressively through the whole page.
+    Useful for websites using lazy-loading and animations.
+    """
+
+    # Start at the top
+    page.evaluate("window.scrollTo(0, 0)")
+    page.wait_for_timeout(1000)
+
+    last_height = 0
+    stable_count = 0
+
+    for _ in range(50):
+
+        # Current page height
+        current_height = page.evaluate(
+            "document.documentElement.scrollHeight"
+        )
+
+        # Height of the visible browser window
+        viewport_height = page.evaluate(
+            "window.innerHeight"
+        )
+
+        # Scroll down by one viewport
+        page.evaluate(
+            f"window.scrollBy(0, {viewport_height * 0.8})"
+        )
+
+        # Give lazy-loaded content time to appear
+        page.wait_for_timeout(1000)
+
+        # Check new height
+        new_height = page.evaluate(
+            "document.documentElement.scrollHeight"
+        )
+
+        # If the page height hasn't changed, count it as stable
+        if new_height == last_height:
+            stable_count += 1
+        else:
+            stable_count = 0
+
+        last_height = new_height
+
+        # If the page has been stable several times, we're probably done
+        if stable_count >= 5:
+            break
+
+        # If we are at the bottom, wait a little longer
+        scroll_position = page.evaluate(
+            "window.scrollY + window.innerHeight"
+        )
+
+        if scroll_position >= new_height - 10:
+            page.wait_for_timeout(2000)
+
+    # Final scroll to the absolute bottom
+    page.evaluate(
+        "window.scrollTo(0, document.documentElement.scrollHeight)"
+    )
+
+    page.wait_for_timeout(3000)
+
 # ---------------------------------------------------------------------------
 # Core fetch — render with Playwright, parse the resulting HTML
 # ---------------------------------------------------------------------------
 
 def fetch_page(browser, url: str, bank: str, page_type: str, language: str) -> PageRecord:
     page = browser.new_page(user_agent=USER_AGENT, viewport={"width": 1440, "height": 900})
-    page.goto(url, timeout=PAGE_TIMEOUT_MS, wait_until="networkidle")
+    # page.goto(url, timeout=PAGE_TIMEOUT_MS, wait_until="networkidle") A REMETTRE APRES
+    #A remettre après
+    # page.goto(
+    # url,
+    # timeout=PAGE_TIMEOUT_MS,
+    # wait_until="domcontentloaded"
+    # )
+    # # Give lazy-loaded content (common on SPA product pages) a moment to settle
+    # page.wait_for_timeout(1500)   
+    #j'ai rajouté
+    page.goto(
+    url,
+    timeout=PAGE_TIMEOUT_MS,
+    wait_until="domcontentloaded"
+    )
 
-    # Give lazy-loaded content (common on SPA product pages) a moment to settle
-    page.wait_for_timeout(1500)
+    page.wait_for_timeout(3000)
+
+    # Load lazy content
+    scroll_page_to_bottom(page)
+
+    # Make sure all images have finished loading
+    page.evaluate("""
+        Promise.all(
+            Array.from(document.images)
+                .map(img => img.complete
+                    ? Promise.resolve()
+                    : new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                    })
+                )
+        )
+    """
+    )
+
+    page.wait_for_timeout(2000)
+
+    # Screenshot after everything has been loaded
+    page.screenshot(
+        path=str(screenshot_path),
+        full_page=True
+    )
+
 
     html = page.content()
     soup = BeautifulSoup(html, "html.parser")
@@ -120,6 +228,11 @@ def fetch_page(browser, url: str, bank: str, page_type: str, language: str) -> P
     safe_name = re.sub(r"[^a-zA-Z0-9]+", "_", f"{bank}_{page_type}").strip("_").lower()
     screenshot_path = SCREENSHOT_DIR / f"{safe_name}_{date.today().isoformat()}.png"
     page.screenshot(path=str(screenshot_path), full_page=True)
+    bottom_screenshot = SCREENSHOT_DIR / f"{safe_name}_bottom.png"
+
+    page.screenshot(
+        path=str(bottom_screenshot)
+    )
 
     dominant_colors = extract_dominant_colors(screenshot_path)
 
@@ -183,21 +296,144 @@ PAGES = [
 ]
 
 
-def run() -> None:
-    conn = init_db()
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True)
-        for url, bank, page_type, lang in PAGES:
-            try:
-                record = fetch_page(browser, url, bank, page_type, lang)
-                save_record(conn, record)
-                print(f"[ok] {bank} — {url}")
-            except Exception as exc:
-                print(f"[fail] {bank} — {url}: {exc}", file=sys.stderr)
-        browser.close()
-    conn.close()
-    print("\nDone. Data in campaigns.db, screenshots in screenshots/")
+def run():
 
+    banks = load_bank_config()
+
+    pages = build_pages_from_config(banks)
+
+    conn = init_db()
+
+    with sync_playwright() as pw:
+
+        browser = pw.chromium.launch(
+            headless=True
+        )
+
+        for url, bank, page_type, lang in pages:
+
+            try:
+
+                record = fetch_page(
+                    browser,
+                    url,
+                    bank,
+                    page_type,
+                    lang
+                )
+
+                save_record(
+                    conn,
+                    record
+                )
+
+                print(
+                    f"[ok] {bank} — {url}"
+                )
+
+            except Exception as exc:
+
+                print(
+                    f"[fail] {bank} — {url}: {exc}",
+                    file=sys.stderr
+                )
+
+        browser.close()
+
+    conn.close()
+
+    print(
+        "\nDone. Data in campaigns.db, "
+        "screenshots in screenshots/"
+    )
+
+# A remettre après
+# def run() -> None:
+#     conn = init_db()
+#     with sync_playwright() as pw:
+#         browser = pw.chromium.launch(headless=True)
+#         for url, bank, page_type, lang in PAGES:
+#             try:
+#                 record = fetch_page(browser, url, bank, page_type, lang)
+#                 save_record(conn, record)
+#                 print(f"[ok] {bank} — {url}")
+#             except Exception as exc:
+#                 print(f"[fail] {bank} — {url}: {exc}", file=sys.stderr)
+#         browser.close()
+#     conn.close()
+#     print("\nDone. Data in campaigns.db, screenshots in screenshots/")
+
+# code à remettre
+# if __name__ == "__main__":
+#     run()
+
+# j'ai rajouté
+def load_bank_config():
+    config_path = Path(__file__).resolve().parent.parent / "config" / "banks.yaml"
+
+    with open(config_path, "r", encoding="utf-8") as file:
+        config = yaml.safe_load(file)
+
+    return config["banks"]
+# J'ai rajouté
+def build_pages_from_config(banks):
+    """
+    Convert banks.yaml configuration into crawler pages.
+    """
+
+    pages = []
+
+    for bank_id, config in banks.items():
+
+        bank_name = config["name"]
+
+        languages = config.get("languages", [])
+
+        seeds = config.get("seeds", [])
+
+        for url in seeds:
+
+            language = languages[0] if languages else "unknown"
+
+            pages.append(
+                (
+                    url,
+                    bank_name,
+                    "youth_account",
+                    language
+                )
+            )
+
+    return pages
+
+#J'ai rajouté
+
+def scroll_page_to_bottom(page):
+    """
+    Scroll progressively to the bottom of the page
+    so lazy-loaded content can be rendered.
+    """
+
+    previous_height = 0
+
+    for _ in range(20):
+
+        current_height = page.evaluate(
+            "document.body.scrollHeight"
+        )
+
+        if current_height == previous_height:
+            break
+
+        previous_height = current_height
+
+        page.evaluate(
+            "window.scrollTo(0, document.body.scrollHeight)"
+        )
+
+        page.wait_for_timeout(1000)
+
+    page.wait_for_timeout(2000)
 
 if __name__ == "__main__":
-    run()
+     run()
