@@ -1,7 +1,7 @@
 import re
 
 
-def handle_cookie_banner(page):
+def handle_cookie_banner(page, scrolling):
     """Finds, logs, and clicks cookie banners across OneTrust, ING, BNP Paribas Fortis, and KBC."""
     # --------------------------------------------------
     # Scroll through the page
@@ -13,54 +13,39 @@ def handle_cookie_banner(page):
     #
 
     print()
-    print("===== SCROLLING PAGE =====")
+    if scrolling:
+        print("===== SCROLLING PAGE =====")
 
-    page.evaluate(
-        """
-        async () => {
+        # 1. Fast step-scroll to trigger IntersectionObserver/lazy-loading triggers
+        page.evaluate(
+            """
+            async () => {
+                const distance = 800; // Larger step distance
+                const delay = 100;    // 100ms between jumps instead of 500ms
+                
+                while (document.scrollingElement.scrollTop + window.innerHeight < document.scrollingElement.scrollHeight) {
+                    window.scrollBy(0, distance);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+                
+                // Jump back to the top so headers/navbars render correctly in screenshot
+                window.scrollTo(0, 0);
+            }
+            """
+        )
 
-            await new Promise((resolve) => {
+        # 2. Replaced the blind 3-second sleep with a network/DOM load check
+        try:
+            # Wait for lazy images/network requests to settle, capping wait at max 1.5s
+            page.wait_for_load_state("networkidle", timeout=1500)
+        except Exception:
+            # Fallback quick buffer if background telemetry keeps network active
+            page.wait_for_timeout(500)
 
-                let totalHeight = 0;
-                const distance = 500;
-                const delay = 500;
-
-                const timer = setInterval(() => {
-
-                    window.scrollBy(
-                        0,
-                        distance
-                    );
-
-                    totalHeight += distance;
-
-                    if (
-                        totalHeight >=
-                        document.body.scrollHeight
-                    ) {
-                        clearInterval(timer);
-                        resolve();
-                    }
-
-                }, delay);
-            });
-        }
-        """
-    )
-
-    # Give lazy-loaded elements a little more time
-    # to appear after scrolling.
-
-    page.wait_for_timeout(3_000)
-
-    final_scroll_height = page.evaluate(
-        "document.body.scrollHeight"
-    )
-
-    print(
-        "Final scroll height:",
-        final_scroll_height
-    )
+        final_scroll_height = page.evaluate("document.body.scrollHeight")
+        print("Final scroll height:", final_scroll_height)
+    else:
+        print("Skipped scrolling.")
 
     # 1. High-Precision ID & Component Selectors (OneTrust, ING Web Components, Standard ARIA roles)
     known_cookie_selectors = [
