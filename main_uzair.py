@@ -3,7 +3,7 @@ ING Banking Campaigns Comparator — main entry point
 
 Runs the pipeline end to end:
   1. Collector  — render each page with Playwright, extract deterministic
-                   features, save screenshots, write raw rows to campaigns.db
+                   features, save screenshots, write raw rows to bank_analysis.db
   2. Analyst    — send each row's raw_text to an LLM (via Groq), fill in
                    tone / value_proposition / topics
   3. Watchdog   — compare today's rows to the previous snapshot (if any)
@@ -64,7 +64,7 @@ def main() -> None:
             sys.exit(1)
 
     print("\n===== Pipeline complete =====")
-    print("Data: campaigns.db  |  Screenshots: screenshots/  |  Changes: 'changes' table in campaigns.db")
+    print("Data: bank_analysis.db  |  Screenshots: screenshots/  |  Changes: 'changes' table in bank_analysis.db")
 
 
 if __name__ == "__main__":

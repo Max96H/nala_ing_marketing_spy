@@ -146,7 +146,7 @@ def fetch_page(browser, url: str, bank: str, page_type: str, language: str) -> P
 # Storage — SQLite
 # ---------------------------------------------------------------------------
 
-def init_db(db_path: str = "db/campaigns.db") -> sqlite3.Connection:
+def init_db(db_path: str = "data/bank_analysis.db") -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.execute(f"""
         CREATE TABLE IF NOT EXISTS pages (
@@ -196,7 +196,7 @@ def run() -> None:
                 print(f"[fail] {bank} — {url}: {exc}", file=sys.stderr)
         browser.close()
     conn.close()
-    print("\nDone. Data in campaigns.db, screenshots in screenshots/")
+    print("\nDone. Data in bank_analysis.db, screenshots in screenshots/")
 
 
 if __name__ == "__main__":

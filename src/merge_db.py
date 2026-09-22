@@ -1,7 +1,7 @@
 """
 ING Banking Campaigns Comparator — Merge
 
-Combines multiple teammates' campaigns.db files (each with a `pages` table
+Combines multiple teammates' bank_analysis.db files (each with a `pages` table
 in the shared schema) into one central database. Rows are deduplicated on
 (bank, page_url, scrape_date) — if two people accidentally scraped the same
 page on the same day, only the first one is kept.
@@ -12,7 +12,7 @@ expected — run analyst.py on the merged database afterward to fill those in
 for everyone's data in one consistent pass.
 
 Usage:
-    python merge_db.py --sources teammate1.db teammate2.db teammate3.db --output db/campaigns.db
+    python merge_db.py --sources teammate1.db teammate2.db teammate3.db --output data/bank_analysis.db
 """
 
 import argparse
@@ -77,11 +77,11 @@ def merge(sources: list[str], output: str) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Merge teammates' campaigns.db files into one.")
+    parser = argparse.ArgumentParser(description="Merge teammates' bank_analysis.db files into one.")
     parser.add_argument("--sources", nargs="+", required=True,
-                         help="Paths to teammates' campaigns.db files (space-separated).")
-    parser.add_argument("--output", default="db/campaigns.db",
-                         help="Path to the central database to merge into (default: db/campaigns.db).")
+                         help="Paths to teammates' bank_analysis.db files (space-separated).")
+    parser.add_argument("--output", default="data/bank_analysis.db",
+                         help="Path to the central database to merge into (default: data/bank_analysis.db).")
     args = parser.parse_args()
     merge(args.sources, args.output)
 

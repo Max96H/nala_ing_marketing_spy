@@ -11,7 +11,7 @@ A single Streamlit app tying together everything the pipeline produces:
 
 Run collector.py -> analyst.py -> analysis.py -> watchdog.py (in that order,
 or via main.py) BEFORE opening this — it only reads what's already in
-db/campaigns.db, it doesn't scrape or analyze anything itself.
+data/bank_analysis.db, it doesn't scrape or analyze anything itself.
 
 Setup:
     pip install streamlit plotly pandas --break-system-packages
@@ -36,7 +36,7 @@ import assistant  # reuse load_context() and the Groq call, don't reimplement it
 
 load_dotenv()
 
-DB_PATH = "db/campaigns.db"
+DB_PATH = "data/bank_analysis.db"
 st.set_page_config(page_title="ING Campaign Comparator", layout="wide")
 
 
