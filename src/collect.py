@@ -59,10 +59,10 @@ def run(selected_banks: dict) -> None:
 
         for bank, config in selected_banks.items():
             urls = config.get("sitemap_links")
-            outpaths = config.get("outpaths")
+            # outpaths = config.get("outpaths")
 
             for i, url in enumerate(urls):
-                outpath = outpaths[i]
+                # outpath = outpaths[i]
                 context = browser.new_context(
                     viewport={"width": 1920, "height": 1080}, locale="en-US"
                 )
@@ -81,8 +81,9 @@ def run(selected_banks: dict) -> None:
                     handle_cookie_banner(page)
 
                     print("Page loaded successfully:", page.title())
-                    screenshot_path = SCREENSHOT_DIR / f"{outpath}_design.png"
-                    page.screenshot(path=str(screenshot_path), full_page=True)
+                    # screenshot_path = SCREENSHOT_DIR / f"{outpath}_design.png"
+                    # page.screenshot(path=str(screenshot_path), full_page=True)
+                    screenshot = page.screenshot(full_page=True)
 
                     scraped_data = extract_marketing_data(page)
 
@@ -95,7 +96,7 @@ def run(selected_banks: dict) -> None:
 
                     save_to_sqlite(url, bank, scraped_data)
 
-                    unique_hex_colors = extract_dominant_colors(str(screenshot_path))
+                    unique_hex_colors = extract_dominant_colors(screenshot)
                     print("\nExtracted Unique HEX Colors:")
                     print(unique_hex_colors)
 
