@@ -1,145 +1,100 @@
-from playwright.sync_api import sync_playwright
-from src.extract_colors import extract_dominant_colors, save_colors_to_sqlite
-from src.cookies import handle_cookie_banner
-from src.insertion_db import save_to_sqlite
-from src.html_scraper import extract_marketing_data
+"""
+ING Banking Campaigns Comparator — main entry point
+
+Default run (`python main.py`, no flags) does everything EXCEPT scraping —
+data collection is the team's side of the pipeline (src/collect.py) and is
+only run when explicitly asked for with --only collect:
+
+  1. Analyst    — send each row's raw_text to an LLM (via Groq), fill in
+                   tone / value_proposition, and topics into page_topics
+  2. Analysis   — compute the positioning map, radar scores, and gap-finder
+                   from the analyzed data (src/analysis.py)
+  3. Watchdog   — compare today's rows to the previous snapshot (if any)
+                   and flag what changed into the 'changes' table
+
+Run this in your OWN environment with normal internet access, and with
+GROQ_API_KEY set. See README.md for full setup.
+
+Usage:
+    python main.py                        # analyst -> analysis -> watchdog (no scraping)
+    python main.py --skip-analyst          # analysis -> watchdog only
+    python main.py --only collect          # scrape only (team's stage) — never runs by default
+    python main.py -b ing kbc --only collect   # scrape only ING and KBC
+    python main.py --only analysis         # re-run just the positioning/radar/gaps
+    python main.py --only watchdog         # re-run just one stage
+    python main.py --only assistant        # launch the interactive chatbot
+"""
+
 import argparse
-import yaml 
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-PROJECT_ROOT = Path(__file__).resolve().parent
-CONFIG_PATH = PROJECT_ROOT / "config" / "banks.yaml"
+import collect
+import analyst
+import analysis
+import change_watcher
+import assistant
 
-def load_bank_config():
-    """
-    Load all bank configurations from banks.yaml.
 
-    The YAML file is the central configuration source for
-    the multi-bank crawler.
-    """
+# Default run: everything except collect — the team runs that separately.
+# 'collect' and 'assistant' are only ever run explicitly via --only.
+STAGES = ["analyst", "analysis", "watchdog"]
+ALL_CHOICES = ["collect"] + STAGES + ["assistant"]
 
-    if not CONFIG_PATH.exists():
-        raise FileNotFoundError(
-            f"Bank configuration not found: {CONFIG_PATH}"
-        )
 
-    with open(
-        CONFIG_PATH,
-        "r",
-        encoding="utf-8",
-    ) as file:
-
-        config = yaml.safe_load(file)
-
-    if not config:
-        raise ValueError(
-            "banks.yaml is empty."
-        )
-
-    banks = config.get("banks")
-
-    if not banks:
-        raise ValueError(
-            "No 'banks' section found in banks.yaml."
-        )
-
-    return banks
-
-def parse_arguments(banks):
-    """Parses command-line arguments for targeting specific banks."""
-    parser = argparse.ArgumentParser(
-        description="Scrape bank marketing pages and save design/content data to SQLite."
-    )
-
-    # Convert bank keys in config to lower-case for case-insensitive matching
+def main() -> None:
+    banks = collect.load_bank_config()
     available_banks = [b.lower() for b in banks.keys()]
 
+    parser = argparse.ArgumentParser(description="Run the ING campaign comparator pipeline.")
     parser.add_argument(
-        "-b",
-        "--banks",
-        nargs="+",  # Accepts one or more bank names separated by space
-        type=str.lower,  # Automatically converts inputs to lowercase
+        "-b", "--banks",
+        nargs="+",
+        type=str.lower,
         choices=available_banks,
-        default=available_banks,  # Defaults to processing all banks
-        help=f"Specific bank(s) to scrape. Choices: {', '.join(available_banks)}. Default: all.",
+        default=available_banks,
+        help=f"Specific bank(s) to scrape (only relevant with --only collect). "
+             f"Choices: {', '.join(available_banks)}. Default: all.",
     )
+    
+    parser.add_argument(
+        "--skip-analyst", action="store_true",
+        help="Skip the LLM analysis step (useful if you don't have GROQ_API_KEY set yet).",
+    )
+    parser.add_argument(
+        "--only", choices=ALL_CHOICES,
+        help="Run only one stage instead of the full pipeline. 'assistant' launches the "
+             "interactive chatbot and is never part of the default automated run.",
+    )
+    args = parser.parse_args()
 
-    return parser.parse_args()
+    selected_banks = {name: cfg for name, cfg in banks.items() if name.lower() in args.banks}
 
-def main():
+    stages_to_run = [args.only] if args.only else list(STAGES)
+    if args.skip_analyst and "analyst" in stages_to_run and not args.only:
+        stages_to_run.remove("analyst")
 
-    banks = load_bank_config()
-    args = parse_arguments(banks)
+    for stage in stages_to_run:
+        print(f"\n===== Running {stage} =====")
+        try:
+            if stage == "collect":
+                collect.run(selected_banks)
+            elif stage == "analyst":
+                analyst.run()
+            elif stage == "analysis":
+                analysis.run()
+            elif stage == "watchdog":
+                change_watcher.run()
+            elif stage == "assistant":
+                assistant.run()
+        except Exception as exc:
+            print(f"[stage failed] {stage}: {exc}", file=sys.stderr)
+            print("Stopping — fix the error above before continuing.", file=sys.stderr)
+            sys.exit(1)
 
-    # Filter the banks dictionary based on user selection
-    selected_banks = {
-        name: config
-        for name, config in banks.items()
-        if name.lower() in args.banks
-    }
-
-    print(f"Targeting banks: {', '.join(selected_banks.keys())}")
-
-    with sync_playwright() as p:
-        browser = p.firefox.launch(headless=True)
-
-        for bank, dic in selected_banks.items():
-            b = banks.get(bank)
-            urls = b.get("sitemap_links")
-            outpaths = b.get("outpaths")
-            for i, url in enumerate(urls):
-                outpath = outpaths[i]
-
-                context = browser.new_context(
-                    viewport={"width": 1920, "height": 1080}, locale="en-US"
-                )
-                page = context.new_page()
-
-                try:
-
-                    print(f"\n--- Navigating to {url} ---")
-                    page.goto(url, wait_until="networkidle")
-
-                    if "/maintenance" in (link:=page.url):
-                        print("Redirected to maintenance page. url :", link)
-                        browser.close()
-                        return
-                    print("Found :", link)
-
-                    handle_cookie_banner(page)
-
-                    print("Page loaded successfully:", page.title())
-                    page.screenshot(path=f"./screenshots/{outpath}_design.png", full_page=True)
-
-                    # Extract targeted marketing fields
-                    scraped_data = extract_marketing_data(page)
-
-                    # Output preview to console
-                    print("\n--- Extracted Marketing Data ---")
-                    for key, val in scraped_data.items():
-                        if key == "raw_text":
-                            print(f"{key}: {val[:120]}... (truncated)")
-                        else:
-                            print(f"{key}: {val}")
-
-                    # Save record
-                    save_to_sqlite(url, bank, scraped_data)
-
-                    unique_hex_colors = extract_dominant_colors(f"./screenshots/{outpath}_design.png")
-                    print("\nExtracted Unique HEX Colors:")
-                    print(unique_hex_colors)
-
-                    # Save to database
-                    save_colors_to_sqlite(url, unique_hex_colors)
-
-                except Exception as e:
-                    print(f"Failed to scrape {url}: {e}")
-
-                finally:
-                    context.close()
-
-        browser.close()
+    print("\n===== Pipeline complete =====")
 
 
 if __name__ == "__main__":

@@ -3,8 +3,12 @@ ING Banking Campaigns Comparator — Assistant (chatbot layer)
 
 An interactive command-line chatbot that answers questions about the
 scraped campaign data — e.g. "how does our tone compare to Revolut's?" or
-"what changed this week?" — grounded entirely in campaigns.db. Uses Groq's
-free-tier API.
+"what changed this week?" — grounded entirely in data/bank_analysis.db.
+Uses Groq's free-tier API.
+
+Topics and colours are read by joining the pages table against the
+page_topics and page_colors junction tables (the team's normalized
+schema), not from flat columns.
 
 The dataset is small (a handful of pages per bank), so this uses a simple
 approach: load every row as compact context, plus recent watchdog changes,
@@ -13,7 +17,7 @@ needed at this scale — if the dataset grows into the hundreds of pages,
 that's the point to add retrieval instead of stuffing everything in.
 
 Setup:
-    pip install groq --break-system-packages
+    pip install groq python-dotenv --break-system-packages
     export GROQ_API_KEY=gsk_...
     (free key: https://console.groq.com)
 
@@ -44,34 +48,52 @@ for people deciding on ING's marketing strategy, not a technical audience.
 Always respond in English, even though some of the source data is in French or Dutch."""
 
 
+def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    return conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (name,)
+    ).fetchone() is not None
+
+
 def load_context(conn: sqlite3.Connection) -> str:
     conn.row_factory = sqlite3.Row
-    rows = conn.execute(
-        "SELECT bank, page_url, page_type, language, scrape_date, headline, subtitle, "
-        "tone, value_proposition, topics, has_numeric_offer, cta_text, dominant_colors "
-        "FROM pages ORDER BY bank, page_type"
+    pages = conn.execute(
+        "SELECT id, bank, page_url, page_type, language, scrape_date, headline, subtitle, "
+        "tone, value_proposition, has_numeric_offer, cta_text FROM pages ORDER BY bank, page_type"
     ).fetchall()
 
-    if not rows:
+    if not pages:
         return "No page data has been scraped yet."
 
+    topics_by_page = {}
+    for row in conn.execute("SELECT page_id, topic FROM page_topics"):
+        topics_by_page.setdefault(row["page_id"], []).append(row["topic"])
+
+    colors_by_page = {}
+    for row in conn.execute("SELECT page_id, color_hex FROM page_colors"):
+        colors_by_page.setdefault(row["page_id"], []).append(row["color_hex"])
+
     lines = ["## Scraped campaign data\n"]
-    for r in rows:
+    for r in pages:
+        topics = topics_by_page.get(r["id"], [])
+        colors = colors_by_page.get(r["id"], [])
         lines.append(
             f"- **{r['bank']} — {r['page_type']}** ({r['language']}, scraped {r['scrape_date']})\n"
             f"  URL: {r['page_url']}\n"
             f"  Headline: {r['headline']!r} | Subtitle: {r['subtitle']!r}\n"
             f"  Tone: {r['tone'] or 'not analyzed yet'} | "
             f"Value proposition: {r['value_proposition'] or 'not analyzed yet'}\n"
-            f"  Topics: {r['topics'] or 'not analyzed yet'} | "
-            f"Numeric offer present: {r['has_numeric_offer']} | CTA: {r['cta_text']!r}\n"
-            f"  Dominant colours: {r['dominant_colors'] or 'not extracted yet'}\n"
+            f"  Topics: {', '.join(topics) if topics else 'not analyzed yet'} | "
+            f"Numeric offer present: {bool(r['has_numeric_offer'])} | CTA: {r['cta_text']!r}\n"
+            f"  Dominant colours: {', '.join(colors) if colors else 'not extracted yet'}\n"
         )
 
-    changes = conn.execute(
-        "SELECT bank, page_url, field_changed, previous_value, current_value, detected_date "
-        "FROM changes ORDER BY detected_date DESC LIMIT 20"
-    ).fetchall() if _table_exists(conn, "changes") else []
+    if _table_exists(conn, "changes"):
+        changes = conn.execute(
+            "SELECT bank, page_url, field_changed, previous_value, current_value, detected_date "
+            "FROM changes ORDER BY detected_date DESC LIMIT 20"
+        ).fetchall()
+    else:
+        changes = []
 
     if changes:
         lines.append("\n## Recently detected changes (most recent first)\n")
@@ -81,18 +103,12 @@ def load_context(conn: sqlite3.Connection) -> str:
                 f"{c['previous_value']!r} to {c['current_value']!r} (detected {c['detected_date']})"
             )
     else:
-        lines.append("\nNo changes detected yet (need at least two scrape runs to compare).")
+        lines.append("\nNo changes detected yet (need at least two change_watcher.py runs to compare).")
 
     return "\n".join(lines)
 
 
-def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
-    return conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (name,)
-    ).fetchone() is not None
-
-
-def run(db_path: str = "db/campaigns.db") -> None:
+def run(db_path: str = "data/bank_analysis.db") -> None:
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         print("ERROR: set GROQ_API_KEY before running this script.", file=sys.stderr)

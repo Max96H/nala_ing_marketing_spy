@@ -1,9 +1,10 @@
 """
 ING Banking Campaigns Comparator — Analysis
 
-Reads the analyzed pages table (must have been through analyst.py first —
-this needs tone/value_proposition/topics filled in) and computes three
-things, writing each into its own table in campaigns.db:
+Reads the analyzed pages (must have been through analyst.py first — needs
+tone/value_proposition filled in, and page_topics populated) from
+data/bank_analysis.db and computes three things, writing each into its own
+table in the same database:
 
   - `positioning`   — one (x, y) point per page, from TF-IDF + PCA over
                        tone + value_proposition + topics. Pages with similar
@@ -18,7 +19,11 @@ things, writing each into its own table in campaigns.db:
   - `gaps`          — topics used by at least one bank but NOT by ING —
                        candidate whitespace/opportunity flags.
 
-These are proxy metrics built from what we actually scrape (image count,
+Topics and colours are read by joining the pages table against the
+page_topics and page_colors junction tables (the team's normalized
+schema) — not from flat string columns.
+
+These are proxy metrics built from what's actually scraped (image count,
 numeric offers, colour saturation, text length, topic overlap) — not a
 claim of ground truth. Worth saying so explicitly in the data-audience
 writeup.
@@ -28,7 +33,6 @@ Usage:
 """
 
 import colorsys
-import json
 import sqlite3
 import sys
 
@@ -36,7 +40,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-DB_PATH = "db/campaigns.db"
+DB_PATH = "data/bank_analysis.db"
 
 
 # ---------------------------------------------------------------------------
@@ -53,12 +57,12 @@ def _hex_to_rgb(hexcode: str):
         return None
 
 
-def _avg_saturation(dominant_colors: str):
-    if not dominant_colors:
+def _avg_saturation(hex_list: list) -> float | None:
+    if not hex_list:
         return None
     sats = []
-    for part in dominant_colors.split(","):
-        rgb = _hex_to_rgb(part)
+    for hexcode in hex_list:
+        rgb = _hex_to_rgb(hexcode)
         if rgb:
             _, s, _ = colorsys.rgb_to_hsv(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255)
             sats.append(s)
@@ -72,13 +76,23 @@ def _normalize(series: pd.Series) -> pd.Series:
     return (series.fillna(series.mean()) - lo) / (hi - lo)
 
 
-def _parse_topics(topics_str: str) -> list:
-    if not topics_str:
-        return []
-    try:
-        return json.loads(topics_str)
-    except (json.JSONDecodeError, TypeError):
-        return []
+def load_pages_with_joins(conn: sqlite3.Connection) -> pd.DataFrame:
+    """Load pages plus their topics and colours from the junction tables,
+    as list columns — this replaces the old flat topics/dominant_colors
+    string columns from the earlier schema."""
+    pages = pd.read_sql_query("SELECT * FROM pages", conn)
+    if pages.empty:
+        return pages
+
+    topics = pd.read_sql_query("SELECT page_id, topic FROM page_topics", conn)
+    colors = pd.read_sql_query("SELECT page_id, color_hex FROM page_colors", conn)
+
+    topics_by_page = topics.groupby("page_id")["topic"].apply(list) if not topics.empty else pd.Series(dtype=object)
+    colors_by_page = colors.groupby("page_id")["color_hex"].apply(list) if not colors.empty else pd.Series(dtype=object)
+
+    pages["topics_list"] = pages["id"].map(topics_by_page).apply(lambda v: v if isinstance(v, list) else [])
+    pages["colors_list"] = pages["id"].map(colors_by_page).apply(lambda v: v if isinstance(v, list) else [])
+    return pages
 
 
 # ---------------------------------------------------------------------------
@@ -86,8 +100,11 @@ def _parse_topics(topics_str: str) -> list:
 # ---------------------------------------------------------------------------
 
 def compute_positioning(df: pd.DataFrame) -> pd.DataFrame:
-    text_blob = (df["tone"].fillna("") + " " + df["value_proposition"].fillna("") + " " +
-                 df["topics"].fillna(""))
+    text_blob = (
+        df["tone"].fillna("") + " " +
+        df["value_proposition"].fillna("") + " " +
+        df["topics_list"].apply(lambda t: " ".join(t))
+    )
     if text_blob.str.strip().eq("").all():
         return pd.DataFrame()
 
@@ -114,15 +131,13 @@ def compute_positioning(df: pd.DataFrame) -> pd.DataFrame:
 def compute_radar(df: pd.DataFrame) -> pd.DataFrame:
     records = []
     for bank, group in df.groupby("bank"):
-        promo = group["has_numeric_offer"].apply(lambda v: 1.0 if str(v) == "True" else 0.0).mean()
+        promo = pd.to_numeric(group["has_numeric_offer"], errors="coerce").fillna(0).mean()
         visuals = pd.to_numeric(group["image_count"], errors="coerce").mean()
-        sat_values = group["dominant_colors"].apply(_avg_saturation).dropna()
+        sat_values = group["colors_list"].apply(_avg_saturation).dropna()
         colour = sat_values.mean() if len(sat_values) else None
         density = group["raw_text"].fillna("").apply(lambda t: len(t.split())).mean()
 
-        all_topics = []
-        for t in group["topics"]:
-            all_topics += _parse_topics(t)
+        all_topics = [t for topics in group["topics_list"] for t in topics]
         diversity = (len(set(all_topics)) / len(group)) if len(group) else 0.0
 
         records.append({
@@ -139,7 +154,6 @@ def compute_radar(df: pd.DataFrame) -> pd.DataFrame:
         radar_df[col] = _normalize(radar_df[col])
     radar_df = radar_df.reset_index()
 
-    # long format: one row per (bank, dimension) — easier for charting later
     long_rows = []
     for _, row in radar_df.iterrows():
         for dim in ["promo_intensity", "visual_richness", "colour_vibrancy",
@@ -155,7 +169,7 @@ def compute_radar(df: pd.DataFrame) -> pd.DataFrame:
 def find_gaps(df: pd.DataFrame, focus_bank: str = "ING") -> pd.DataFrame:
     bank_topics = {}
     for _, row in df.iterrows():
-        bank_topics.setdefault(row["bank"], set()).update(_parse_topics(row["topics"]))
+        bank_topics.setdefault(row["bank"], set()).update(row["topics_list"])
 
     all_topics = set()
     for topics in bank_topics.values():
@@ -187,16 +201,16 @@ def save_results(conn: sqlite3.Connection, positioning: pd.DataFrame,
 
 def run(db_path: str = DB_PATH) -> None:
     conn = sqlite3.connect(db_path)
-    df = pd.read_sql_query("SELECT * FROM pages", conn)
+    df = load_pages_with_joins(conn)
 
     if df.empty:
-        print("No pages found — run collector.py (and merge_db.py, if applicable) first.")
+        print("No pages found — run collect.py first.")
         conn.close()
         return
 
     analyzed = df[df["tone"].fillna("") != ""]
     if analyzed.empty:
-        print("No pages have been analyzed yet (tone/value_proposition/topics are empty). "
+        print("No pages have been analyzed yet (tone/value_proposition are empty). "
               "Run analyst.py first, then re-run this script.")
         conn.close()
         return

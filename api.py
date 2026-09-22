@@ -1,7 +1,7 @@
 """
 ING Banking Campaigns Comparator — API backend
 
-Serves everything in db/campaigns.db as JSON for the React app in app/, and
+Serves everything in data/bank_analysis.db as JSON for the React app in app/, and
 proxies chatbot requests to Groq (keeps the API key server-side — it's
 never sent to the browser).
 
@@ -33,7 +33,7 @@ import assistant  # reuse load_context(), SYSTEM_PROMPT, MODEL — don't reimple
 
 load_dotenv()
 
-DB_PATH = "db/campaigns.db"
+DB_PATH = "data/bank_analysis.db"
 
 app = FastAPI(title="ING Campaign Comparator API")
 
