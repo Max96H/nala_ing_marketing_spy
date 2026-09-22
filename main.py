@@ -86,7 +86,7 @@ def main():
 
         for bank, dic in selected_banks.items():
             b = banks.get(bank)
-            urls = b.get("seeds")
+            urls = b.get("sitemap_links")
             outpaths = b.get("outpaths")
             for i, url in enumerate(urls):
                 outpath = outpaths[i]
