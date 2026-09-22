@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { api } from '../api'
 
 const SUGGESTIONS = [
@@ -52,7 +54,11 @@ export default function Chatbot() {
         )}
         {messages.map((m, i) => (
           <div key={i} className={`chat-msg ${m.role}`}>
-            {m.content}
+            {m.role === 'assistant' ? (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+            ) : (
+              m.content
+            )}
           </div>
         ))}
         {sending && <div className="chat-msg assistant thinking">Thinking…</div>}
