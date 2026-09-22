@@ -9,3 +9,5 @@ plotly
 streamlit
 fastapi
 uvicorn
+PyYAML
+pillow
