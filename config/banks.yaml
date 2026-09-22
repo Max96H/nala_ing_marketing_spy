@@ -239,3 +239,65 @@ banks:
       - insurance
       - loan
       - credit
+
+
+
+  # ==========================================================
+  # REVOLUT
+  # ==========================================================
+
+  revolut:
+    name: "Revolut Belgium"
+    domain: "revolut.com"
+
+    outpaths:
+      - "revolut_youth_account"
+
+    # Starting points for the crawler
+    seeds:
+      - "https://www.revolut.com/fr-BE/revolut-kids-and-teens-benefits/"
+
+    sitemap_urls:
+      - "https://www.revolut.com/sitemap.xml"
+
+    languages:
+      - en
+      - fr
+      - nl
+
+    # Keywords used to discover relevant youth/current-account pages
+    product_keywords:
+      - youth
+      - young
+      - under-18
+      - under18
+      - kids
+      - child
+      - children
+      - teen
+      - teenager
+      - junior
+      - revolut-under-18
+      - account
+      - card
+      - debit-card
+      - payment
+      - payments
+      - compte
+      - compte-jeune
+      - enfant
+      - enfants
+      - adolescent
+      - adolescents
+      - carte
+      - paiement
+
+    # Pages that should not be considered relevant
+    exclude_keywords:
+      - business
+      - trading
+      - investment
+      - crypto
+      - mortgage
+      - loan
+      - insurance
