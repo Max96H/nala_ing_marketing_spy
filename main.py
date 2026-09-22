@@ -58,6 +58,7 @@ def main() -> None:
         help=f"Specific bank(s) to scrape (only relevant with --only collect). "
              f"Choices: {', '.join(available_banks)}. Default: all.",
     )
+    
     parser.add_argument(
         "--skip-analyst", action="store_true",
         help="Skip the LLM analysis step (useful if you don't have GROQ_API_KEY set yet).",
