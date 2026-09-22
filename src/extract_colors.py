@@ -3,9 +3,10 @@ import sqlite3
 from playwright.sync_api import sync_playwright
 from collections import Counter
 from PIL import Image
+import io
 
 def extract_dominant_colors(
-        screenshot_path: str | None,
+        screenshot,
         color_count: int = 5,
     ) -> list[str]:
         """
@@ -16,62 +17,49 @@ def extract_dominant_colors(
         """
 
         # No screenshot means no color analysis is possible.
-        if not screenshot_path:
+        if not screenshot:
             return []
 
         try:
 
             # Open the screenshot using Pillow.
-            image = Image.open(
-                screenshot_path
-            )
+            with Image.open(io.BytesIO(screenshot)) as img:
+                # 1. Handle transparency: paste onto a white background
+                if img.mode in ("RGBA", "LA") or (
+                    img.mode == "P" and "transparency" in img.info
+                ):
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    background.paste(
+                        img, mask=img.convert("RGBA").split()[3]
+                    )  # 3 is the alpha channel
+                    image = background
+                else:
+                    image = img.convert("RGB")
 
-            # Use RGB for consistent color processing.
-            image = image.convert(
-                "RGB"
-            )
+                # 2. Downscale image for speed (800x800 is plenty of detail)
+                image.thumbnail((800, 800))
 
-            # Reduce the image size to make the analysis faster.
-            image.thumbnail(
-                (800, 800)
-            )
+                # 3. Quantize to 32 colors
+                quantized = image.quantize(colors=32).convert("RGB")
 
-            # Reduce the number of colors to a manageable palette.
-            quantized = image.quantize(
-                colors=32
-            ).convert(
-                "RGB"
-            )
+                # 4. Use getcolors() instead of list(getdata()) for speed & memory safety
+                # maxcolors must be >= the total pixels in thumbnail
+                width, height = quantized.size
+                color_counts = quantized.getcolors(maxcolors=width * height)
 
-            pixels = list(
-                quantized.getdata()
-            )
+                if not color_counts:
+                    return []
 
-            # Count how frequently each RGB color appears.
-            counter = Counter(
-                pixels
-            )
+                # 5. Sort by frequency (highest count first)
+                sorted_colors = sorted(color_counts, key=lambda x: x[0], reverse=True)
 
-            dominant_colors = []
+                # 6. Convert top N RGB tuples to Hex format
+                dominant_colors = []
+                for count, rgb in sorted_colors[:color_count]:
+                    hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+                    dominant_colors.append(hex_color)
 
-            # Keep the most frequent colors.
-            for rgb, _count in counter.most_common(
-                color_count
-            ):
-
-                hex_color = (
-                    "#{:02x}{:02x}{:02x}".format(
-                        rgb[0],
-                        rgb[1],
-                        rgb[2],
-                    )
-                )
-
-                dominant_colors.append(
-                    hex_color
-                )
-
-            return dominant_colors
+                return dominant_colors
 
         except Exception as e:
 

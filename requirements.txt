@@ -9,3 +9,5 @@ fastapi
 uvicorn
 PyYAML
 pillow
+robotexclusionrulesparser
+requests
