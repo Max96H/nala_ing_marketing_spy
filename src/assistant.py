@@ -10,6 +10,15 @@ Topics and colours are read by joining the pages table against the
 page_topics and page_colors junction tables (the team's normalized
 schema), not from flat columns.
 
+Trustworthiness note: unlike analyst.py (which can verify its quotes
+against the source text automatically), a conversational answer can't be
+checked that way — so this relies on prompting instead: the system prompt
+requires every claim to be tied to a specific bank/page from the context
+below, forbids drawing on general knowledge about these brands, and
+requires an explicit "not in the data" answer when the context doesn't
+cover the question. Temperature is kept low so answers stay close to what
+the context actually supports rather than getting creative.
+
 The dataset is small (a handful of pages per bank), so this uses a simple
 approach: load every row as compact context, plus recent watchdog changes,
 and hand it all to the model with the user's question. No vector search
@@ -36,16 +45,25 @@ from groq import Groq
 load_dotenv()
 
 MODEL = "openai/gpt-oss-120b"
+TEMPERATURE = 0.3  # low-ish — factual grounded answers, not creative ones
 
 SYSTEM_PROMPT = """You are a marketing analyst assistant for ING, helping ING staff understand how \
 their bank's campaigns compare to competitors (KBC, BNP Paribas Fortis, Belfius, Revolut).
 
 You will be given structured data scraped from each bank's product/campaign pages, plus any \
-recently detected changes. Answer questions using ONLY this data — if something isn't in the \
-data, say so plainly rather than guessing. Keep answers concise and business-relevant; this is \
-for people deciding on ING's marketing strategy, not a technical audience.
+recently detected changes. Ground every answer in this data only:
+- Every specific claim you make must be traceable to a bank/page shown below — name which \
+bank(s) it comes from.
+- Do NOT draw on general knowledge, assumptions, or reputation about these banks beyond what's \
+in the data below, even if you're confident it's true.
+- If the data needed to answer isn't present below, say so plainly ("that's not in the scraped \
+data") rather than inferring or guessing.
+- When comparing banks (e.g. "which is more casual"), base it directly on the tone/value \
+proposition wording shown for each — don't rely on brand reputation.
 
-Always respond in English, even though some of the source data is in French or Dutch."""
+Keep answers concise and business-relevant; this is for people deciding on ING's marketing \
+strategy, not a technical audience. Always respond in English, even though some of the source \
+data is in French or Dutch."""
 
 
 def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
@@ -137,6 +155,7 @@ def run(db_path: str = "data/bank_analysis.db") -> None:
         response = client.chat.completions.create(
             model=MODEL,
             max_tokens=1000,
+            temperature=TEMPERATURE,
             messages=history,
         )
         answer = response.choices[0].message.content.strip()
