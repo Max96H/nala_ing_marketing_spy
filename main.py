@@ -58,6 +58,11 @@ def main() -> None:
         help=f"Specific bank(s) to scrape (only relevant with --only collect). "
              f"Choices: {', '.join(available_banks)}. Default: all.",
     )
+    parser.add_argument(
+        "--scroll",
+        action="store_true",  # <--- Automatically sets args.scroll to True when present, False when absent
+        help="Scroll down the page to trigger lazy-loaded elements before taking a screenshot. Default: False",
+    )
     
     parser.add_argument(
         "--skip-analyst", action="store_true",
@@ -73,6 +78,11 @@ def main() -> None:
     selected_banks = {name: cfg for name, cfg in banks.items() if name.lower() in args.banks}
 
     stages_to_run = [args.only] if args.only else list(STAGES)
+    scrolling = args.scroll
+    if scrolling:
+        print("Will scroll to load the page before screenshot.")
+    else:
+        print("Run without scrolling.")
     if args.skip_analyst and "analyst" in stages_to_run and not args.only:
         stages_to_run.remove("analyst")
 
@@ -80,7 +90,7 @@ def main() -> None:
         print(f"\n===== Running {stage} =====")
         try:
             if stage == "collect":
-                collect.run(selected_banks)
+                collect.run(selected_banks, scrolling)
             elif stage == "analyst":
                 analyst.run()
             elif stage == "analysis":

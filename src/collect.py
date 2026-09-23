@@ -48,7 +48,7 @@ def load_bank_config() -> dict:
     return banks
 
 
-def run(selected_banks: dict) -> None:
+def run(selected_banks: dict, scrolling) -> None:
     """Scrape every seed URL for the given banks (a filtered dict from
     load_bank_config()) and save results to the database."""
     SCREENSHOT_DIR.mkdir(exist_ok=True)
@@ -78,7 +78,7 @@ def run(selected_banks: dict) -> None:
                         return
                     print("Found:", link)
 
-                    handle_cookie_banner(page)
+                    handle_cookie_banner(page, scrolling)
 
                     print("Page loaded successfully:", page.title())
                     # screenshot_path = SCREENSHOT_DIR / f"{outpath}_design.png"

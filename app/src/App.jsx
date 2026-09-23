@@ -5,7 +5,8 @@ import RadarComparison from './components/RadarComparison'
 import ChangeFeed from './components/ChangeFeed'
 import Gaps from './components/Gaps'
 import Chatbot from './components/Chatbot'
-import { IconOverview, IconMap, IconRadar, IconChanges, IconGaps, IconChat } from './components/Icons'
+import Methodology from './components/Methodology'
+import { IconOverview, IconMap, IconRadar, IconChanges, IconGaps, IconChat, IconInfo } from './components/Icons'
 
 const VIEWS = [
   { id: 'overview', label: 'Overview', icon: IconOverview, component: Overview,
@@ -20,6 +21,8 @@ const VIEWS = [
     title: 'Gaps', description: "Topics competitors use that ING's campaigns don't." },
   { id: 'chat', label: 'Ask', icon: IconChat, component: Chatbot,
     title: 'Ask about the data', description: null },
+  { id: 'methodology', label: 'Methodology', icon: IconInfo, component: Methodology,
+    title: 'Methodology', description: 'How each module works, what it measures, and how LLM-generated fields are checked.' },
 ]
 
 export default function App() {
