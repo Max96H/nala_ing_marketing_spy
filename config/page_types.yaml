@@ -17,6 +17,10 @@ categories:
       - "contact"
       - "info"
       - "information"
+      - "legal-documents"
+      - "imprint"
+      - "sitemap"
+      - "about-n26"
     url_patterns:
       - "/reglements-et-tarifs/"
       - "/fraud-and-security/"
@@ -37,6 +41,11 @@ categories:
       - "/service-messages"
       - "/questions-contact/"
       - "/doccontrol/"
+      - "/legal-documents"  # Catches /legal-documents/* (terms, privacy, disclosures)
+      - "/imprint"
+      - "/sitemap"
+      - "/about-n26"
+      - "/aytac-aydin"       # Exec/Author bio pages
 
   # ==========================================
   # 2. HIGHLY SPECIFIC RETAIL PRODUCTS
@@ -51,6 +60,7 @@ categories:
       - "student"
       - "jongeren"
       - "jeunes"
+      - "under-18s"
     url_patterns:
       - "/compte-bancaire-pour-jeune"
       - "/banking-for-young-people/"
@@ -59,6 +69,7 @@ categories:
       - "/jongeren/"
       - "/jeunes/"
       - "/payments/account-for-your-child"
+      - "/under-18s"
 
   payment_cards:
     label: "Payment & Credit Cards"
@@ -70,6 +81,9 @@ categories:
       - "payment-cards"
       - "business-cards"
       - "cards"
+      - "google-pay"
+      - "apple-pay"
+      - "garmin-pay"
     url_patterns:
       - "/credit-cards/"
       - "/credit-card/"
@@ -83,6 +97,9 @@ categories:
       - "/payments/voordelen-mastercard"
       - "credit-card"
       - "debit-card"
+      - "/google-pay"
+      - "/apple-pay"
+      - "/garmin-pay"
 
   current_accounts:
     label: "Current Accounts & Packages"
@@ -92,6 +109,10 @@ categories:
       - "current-account"
       - "business-accounts"
       - "compte-bancaire"
+      - "free-bank-account"
+      - "bank-account"
+      - "metal"
+      - "plans"
     url_patterns:
       - "/current-accounts-packs/"
       - "/current-accounts/"
@@ -101,6 +122,10 @@ categories:
       - "/payments/current-accounts"
       - "/payments/what-is-a-current-account"
       - "/payments/joint-accounts"
+      - "/free-bank-account"
+      - "/bank-account"
+      - "/metal"              # N26 primary tier package
+      - "/plans"
 
   loans_mortgages:
     label: "Loans, Mortgages & Financing"
@@ -143,6 +168,10 @@ categories:
       - "investing"
       - "investments"
       - "taxes"
+      - "crypto"
+      - "stocks-and-etfs"
+      - "ready-made-funds"
+      - "spaces"
     url_patterns:
       - "/epargner-investir/"
       - "/save-and-invest/"
@@ -160,6 +189,11 @@ categories:
       - "/sparen/"
       - "/beleggen/"
       - "/epargne/"
+      - "/crypto"
+      - "/stocks-and-etfs"
+      - "/ready-made-funds"
+      - "/savings-account"
+      - "/spaces"
 
   insurance:
     label: "Insurance"
@@ -168,6 +202,8 @@ categories:
       - "assurer"
       - "verzekeringen"
       - "assurances"
+      - "travel-insurance"
+      - "allianz"
     url_patterns:
       - "/insurance/"
       - "/assurer/"
@@ -176,6 +212,8 @@ categories:
       - "/insurance"  # Catches top-level /insurance.html
       - "-insurance"  # Catches /payments/purchase-protection-insurance, etc.
       - "cancellation-insurance"
+      - "-travel-insurance"  # Catches /you-bank-account-with-travel-insurance
+      - "/allianz"
 
   # ==========================================
   # 3. PLATFORMS & BUSINESS SECTORS
@@ -192,6 +230,10 @@ categories:
       - "online-banking"
       - "self-banking"
       - "banque-par-vous-meme"
+      - "download-app"
+      - "banking-features"
+      - "travel-esim"
+      - "airport-lounges"
     url_patterns:
       - "/online-banking-for-businesses/"
       - "/doing-business-online/"
@@ -201,6 +243,11 @@ categories:
       - "/online-banking/"
       - "/self-banking/"
       - "/banque-par-vous-meme/"
+      - "/download-app"
+      - "/banking-features"
+      - "/travel-esim"
+      - "/travel-benefits"
+      - "/airport-lounges"
 
   business_entrepreneurs:
     label: "Business, Entrepreneurs & Professionals"
@@ -220,6 +267,9 @@ categories:
       - "my-sector"
       - "secteurs"
       - "vos-ambitions"
+      - "business-metal"
+      - "plans-business"
+      - "free-business-bank-account"
     url_patterns:
       - "/sustainable-business/"
       - "/medical-professions/"
@@ -236,6 +286,9 @@ categories:
       - "/my-sector/"
       - "/secteurs/"
       - "/vos-ambitions/"
+      - "/business-"          # Catches /business-metal, /free-business-bank-account, etc.
+      - "/plans-business"
+      - "/business"
 
   # ==========================================
   # 4. EDITORIAL, CAMPAIGNS & SEGMENTS
@@ -286,6 +339,7 @@ categories:
       - "paiement"
       - "payments"
       - "services"
+      - "n26-mobile"
     url_patterns:
       - "/daily-banking/"
       - "/sending-money/"
@@ -294,3 +348,4 @@ categories:
       - "/payments/"
       - "/services/"
       - "/retail/"
+      - "/n26-mobile"
