@@ -275,18 +275,66 @@ tr:last-child td {
   font-size: 14.5px;
   line-height: 1.55;
   margin-bottom: 12px;
-  white-space: pre-wrap;
 }
 
 .chat-msg.user {
   background: var(--color-accent);
   color: #fff;
   margin-left: auto;
+  white-space: pre-wrap;
 }
 
 .chat-msg.assistant {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  max-width: 100%;
+}
+
+.chat-msg.assistant > *:first-child {
+  margin-top: 0;
+}
+
+.chat-msg.assistant > *:last-child {
+  margin-bottom: 0;
+}
+
+.chat-msg.assistant p {
+  margin: 0 0 10px;
+}
+
+.chat-msg.assistant ul,
+.chat-msg.assistant ol {
+  margin: 0 0 10px;
+  padding-left: 22px;
+}
+
+.chat-msg.assistant li {
+  margin-bottom: 4px;
+}
+
+.chat-msg.assistant li > p {
+  margin: 0;
+}
+
+.chat-msg.assistant strong {
+  font-weight: 600;
+}
+
+.chat-msg.assistant code {
+  background: var(--color-paper);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 13px;
+}
+
+.chat-msg.assistant table {
+  margin: 4px 0 12px;
+  font-size: 13px;
+}
+
+.chat-msg.assistant th,
+.chat-msg.assistant td {
+  padding: 6px 10px;
 }
 
 .chat-msg.thinking {

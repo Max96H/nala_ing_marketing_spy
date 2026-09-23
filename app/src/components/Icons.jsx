@@ -44,3 +44,11 @@ export const IconChat = () => (
     <path d="M4 5.5h16v10H9.5L5 19v-3.5H4z" />
   </svg>
 )
+
+export const IconInfo = () => (
+  <svg viewBox="0 0 24 24" className="nav-icon" {...common}>
+    <circle cx="12" cy="12" r="8" />
+    <line x1="12" y1="11" x2="12" y2="16" />
+    <circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none" />
+  </svg>
+)
