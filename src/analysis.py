@@ -18,6 +18,10 @@ table in the same database:
                        comparable on one radar chart.
   - `gaps`          — topics used by at least one bank but NOT by ING —
                        candidate whitespace/opportunity flags.
+  - `recommendations` — one short, business-facing recommendation per gap,
+                       generated in a single batched LLM call (the gap list
+                       is small even at thousands of pages, so this stays
+                       cheap regardless of scrape size).
 
 Topics and colours are read by joining the pages table against the
 page_topics and page_colors junction tables (the team's normalized
@@ -33,12 +37,15 @@ Usage:
 """
 
 import colorsys
+import json
 import sqlite3
 import sys
 
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+from llm_client import get_client
 
 DB_PATH = "data/bank_analysis.db"
 
@@ -185,17 +192,76 @@ def find_gaps(df: pd.DataFrame, focus_bank: str = "ING") -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# Recommendations — one short business recommendation per gap
+# ---------------------------------------------------------------------------
+
+RECOMMENDATION_SYSTEM_PROMPT = """You are a marketing strategy advisor for ING, writing for \
+business stakeholders (not technical staff). You'll be given a list of topics that ING's \
+competitor banks use in their campaigns but ING currently does not.
+
+For each topic, write ONE short, concrete, business-facing recommendation (1-2 sentences) on \
+whether and how ING might explore it. Be measured, not hype: these are candidates worth a look, \
+not proven wins — phrase recommendations as "worth exploring" / "consider testing", not as \
+certainties. If a topic seems like a poor fit for ING specifically (e.g. clashes with a bank's \
+positioning), it's fine to say so plainly rather than force a positive spin.
+
+Respond with ONLY a JSON object, no other text, no markdown fences:
+{"recommendations": [{"topic": "<topic exactly as given>", "recommendation": "<1-2 sentences>"}]}"""
+
+
+def generate_recommendations(gaps: pd.DataFrame, focus_bank: str = "ING") -> pd.DataFrame:
+    """One batched LLM call covering every gap at once — the gap list stays
+    small (one row per missing topic) regardless of how many pages were
+    scraped, so this is cheap even at thousands of pages."""
+    if gaps.empty:
+        return pd.DataFrame()
+
+    try:
+        client, model = get_client()
+    except (RuntimeError, ValueError) as exc:
+        print(f"[warn] skipping recommendations — {exc}", file=sys.stderr)
+        return pd.DataFrame()
+
+    gap_list = "\n".join(f"- {row['topic']} (used by: {row['used_by']})"
+                          for _, row in gaps.iterrows())
+    prompt = f"Topics {focus_bank} is missing that competitors use:\n{gap_list}"
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=200 * len(gaps) + 200,
+            temperature=0.4,  # a little more room than extraction — this is advisory phrasing
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": RECOMMENDATION_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        results = json.loads(response.choices[0].message.content.strip()).get("recommendations", [])
+    except Exception as exc:
+        print(f"[warn] recommendation generation failed: {exc}", file=sys.stderr)
+        return pd.DataFrame()
+
+    rec_by_topic = {r.get("topic"): r.get("recommendation", "") for r in results}
+    out = gaps.copy()
+    out["recommendation"] = out["topic"].map(rec_by_topic).fillna("")
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Storage
 # ---------------------------------------------------------------------------
 
-def save_results(conn: sqlite3.Connection, positioning: pd.DataFrame,
-                  radar: pd.DataFrame, gaps: pd.DataFrame) -> None:
+def save_results(conn: sqlite3.Connection, positioning: pd.DataFrame, radar: pd.DataFrame,
+                  gaps: pd.DataFrame, recommendations: pd.DataFrame) -> None:
     if not positioning.empty:
         positioning.to_sql("positioning", conn, if_exists="replace", index=False)
     if not radar.empty:
         radar.to_sql("radar_scores", conn, if_exists="replace", index=False)
     if not gaps.empty:
         gaps.to_sql("gaps", conn, if_exists="replace", index=False)
+    if not recommendations.empty:
+        recommendations.to_sql("recommendations", conn, if_exists="replace", index=False)
     conn.commit()
 
 
@@ -221,13 +287,14 @@ def run(db_path: str = DB_PATH) -> None:
     positioning = compute_positioning(analyzed)
     radar = compute_radar(analyzed)
     gaps = find_gaps(analyzed)
+    recommendations = generate_recommendations(gaps)
 
-    save_results(conn, positioning, radar, gaps)
+    save_results(conn, positioning, radar, gaps, recommendations)
     conn.close()
 
     print(f"Done. positioning: {len(positioning)} row(s), "
-          f"radar_scores: {len(radar)} row(s), gaps: {len(gaps)} row(s) — "
-          f"written to {db_path}")
+          f"radar_scores: {len(radar)} row(s), gaps: {len(gaps)} row(s), "
+          f"recommendations: {len(recommendations)} row(s) — written to {db_path}")
 
 
 if __name__ == "__main__":

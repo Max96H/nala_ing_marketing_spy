@@ -11,3 +11,4 @@ PyYAML
 pillow
 robotexclusionrulesparser
 requests
+openai
