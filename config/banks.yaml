@@ -3271,3 +3271,80 @@ banks:
     - https://www.bnpparibasfortis.be/en/public/individuals/save-and-invest/pension-savings/optimisation
     - https://www.bnpparibasfortis.be/en/public/individuals/save-and-invest/pension-savings/maximum-amount
     - https://www.bnpparibasfortis.be/en/public/entrepreneurs/daily-banking/online-banking/easy-banking-app
+  n26:
+    name: N26 Belgium
+    domain: n26.com
+    outpaths:
+    - n26_youth_account
+    seeds:
+    - https://n26.com/en-be/under-18s
+    sitemap_urls:
+    - https://n26.com/sitemap-index.xml
+    sitemap_roots:
+    - https://n26.com/en-be/
+    languages:
+    - en
+    product_keywords:
+    - youth
+    - young
+    - under-18
+    - under-18s
+    - under18
+    - kids
+    - child
+    - children
+    - teen
+    - teenager
+    - junior
+    - account
+    - card
+    - debit-card
+    - payment
+    - payments
+    exclude_keywords:
+    - business
+    - investment
+    - trading
+    - crypto
+    - mortgage
+    - loan
+    - insurance
+    sitemap_links:
+    - https://n26.com/en-be/legal-documents
+    - https://n26.com/en-be/legal-documents/n26-mobile
+    - https://n26.com/en-be/legal-documents/spaces
+    - https://n26.com/en-be/legal-documents/privacy-policy
+    - https://n26.com/en-be/legal-documents/n26-travel-esim
+    - https://n26.com/en-be/legal-documents/airport-lounges
+    - https://n26.com/en-be/legal-documents/n26-business-you-allianz-tnc-04-may-2023
+    - https://n26.com/en-be/legal-documents/n26-you-allianz-ipid
+    - https://n26.com/en-be/legal-documents/you
+    - https://n26.com/en-be/legal-documents/business-you
+    - https://n26.com/en-be/legal-documents/you-allianz-insurance-04-may-2023
+    - https://n26.com/en-be/metal
+    - https://n26.com/en-be/free-bank-account
+    - https://n26.com/en-be/aytac-aydin
+    - https://n26.com/en-be/you-business-bank-account-with-travel-insurance
+    - https://n26.com/en-be/you-bank-account-with-travel-insurance
+    - https://n26.com/en-be/travel-benefits
+    - https://n26.com/en-be/stocks-and-etfs
+    - https://n26.com/en-be/crypto
+    - https://n26.com/en-be/bank-account
+    - https://n26.com/en-be/business-metal
+    - https://n26.com/en-be/plans
+    - https://n26.com/en-be/savings-account
+    - https://n26.com/en-be/business-bank-account-smart
+    - https://n26.com/en-be/free-business-bank-account
+    - https://n26.com/en-be/about-n26
+    - https://n26.com/en-be/travel-esim
+    - https://n26.com/en-be/plans-business
+    - https://n26.com/en-be/banking-features
+    - https://n26.com/en-be/ready-made-funds
+    - https://n26.com/en-be/under-18s
+    - https://n26.com/en-be/download-app
+    - https://n26.com/en-be/google-pay
+    - https://n26.com/en-be/apple-pay
+    - https://n26.com/en-be/imprint
+    - https://n26.com/en-be/travel-benefits-crm
+    - https://n26.com/en-be/garmin-pay
+    - https://n26.com/en-be/sitemap
