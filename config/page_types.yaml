@@ -1,0 +1,296 @@
+categories:
+  # ==========================================
+  # 1. UTILITY, LEGAL, RATES & SECURITY (CAUGHT FIRST)
+  # ==========================================
+  utility_security_legal:
+    label: "Corporate, Security, Legal & Rates"
+    keywords:
+      - "reglements-et-tarifs"
+      - "fraud-and-security"
+      - "online-security"
+      - "legal-information"
+      - "about-us"
+      - "contact-us"
+      - "working-at-kbc"
+      - "duurzaamheid"
+      - "redirects"
+      - "contact"
+      - "info"
+      - "information"
+    url_patterns:
+      - "/reglements-et-tarifs/"
+      - "/fraud-and-security/"
+      - "/online-security/"
+      - "/legal-information/"
+      - "/working-at-kbc/"
+      - "/about-us/"
+      - "/contact-us/"
+      - "/contact/"
+      - "/duurzaamheid/"
+      - "/redirects/"
+      - "/information/"
+      - "/info/"
+      - "/accessibility"
+      - "/branch"
+      - "/technisch/"
+      - "/site-map"
+      - "/service-messages"
+      - "/questions-contact/"
+      - "/doccontrol/"
+
+  # ==========================================
+  # 2. HIGHLY SPECIFIC RETAIL PRODUCTS
+  # ==========================================
+  youth_account:
+    label: "Youth & Student Banking"
+    keywords:
+      - "youth"
+      - "young-people"
+      - "banking-for-young-people"
+      - "compte-bancaire-pour-jeune"
+      - "student"
+      - "jongeren"
+      - "jeunes"
+    url_patterns:
+      - "/compte-bancaire-pour-jeune"
+      - "/banking-for-young-people/"
+      - "/young-people/"
+      - "/youth/"
+      - "/jongeren/"
+      - "/jeunes/"
+      - "/payments/account-for-your-child"
+
+  payment_cards:
+    label: "Payment & Credit Cards"
+    keywords:
+      - "credit-cards"
+      - "credit-card"
+      - "debit-cards"
+      - "debit-card"
+      - "payment-cards"
+      - "business-cards"
+      - "cards"
+    url_patterns:
+      - "/credit-cards/"
+      - "/credit-card/"
+      - "/debit-cards/"
+      - "/debit-card/"
+      - "/payment-cards/"
+      - "/use-of-payment-cards/"
+      - "/business-cards/"
+      - "/cards/"
+      - "/payments/payment-cards"
+      - "/payments/voordelen-mastercard"
+      - "credit-card"
+      - "debit-card"
+
+  current_accounts:
+    label: "Current Accounts & Packages"
+    keywords:
+      - "current-accounts-packs"
+      - "current-accounts"
+      - "current-account"
+      - "business-accounts"
+      - "compte-bancaire"
+    url_patterns:
+      - "/current-accounts-packs/"
+      - "/current-accounts/"
+      - "/current-account/"
+      - "/business-accounts/"
+      - "/accounts/"
+      - "/payments/current-accounts"
+      - "/payments/what-is-a-current-account"
+      - "/payments/joint-accounts"
+
+  loans_mortgages:
+    label: "Loans, Mortgages & Financing"
+    keywords:
+      - "borrowing"
+      - "borrow"
+      - "loans"
+      - "loan"
+      - "financer"
+      - "financing"
+      - "credit"
+      - "emprunter"
+      - "lening"
+      - "krediet"
+      - "hypotheek"
+    url_patterns:
+      - "/borrowing/"
+      - "/borrow/"
+      - "/financing/"
+      - "/financer/"
+      - "/loans/"
+      - "/loan/"
+      - "/credit/"
+      - "/leningen/"
+      - "/emprunts/"
+
+  savings_investments:
+    label: "Savings, Investments & Asset Management"
+    keywords:
+      - "save-and-invest"
+      - "saving-and-investing"
+      - "epargner-investir"
+      - "savings-accounts"
+      - "managing-my-assets"
+      - "priority-banking-exclusive"
+      - "pension-saving"
+      - "pension"
+      - "saving"
+      - "savings"
+      - "investing"
+      - "investments"
+      - "taxes"
+    url_patterns:
+      - "/epargner-investir/"
+      - "/save-and-invest/"
+      - "/saving-and-investing/"
+      - "/savings-accounts/"
+      - "/managing-my-assets/"
+      - "/pension-saving/"
+      - "/priority-banking-exclusive/"
+      - "/investing/"
+      - "/investments/"
+      - "/saving/"
+      - "/savings/"
+      - "/pension/"
+      - "/taxes/"
+      - "/sparen/"
+      - "/beleggen/"
+      - "/epargne/"
+
+  insurance:
+    label: "Insurance"
+    keywords:
+      - "insurance"
+      - "assurer"
+      - "verzekeringen"
+      - "assurances"
+    url_patterns:
+      - "/insurance/"
+      - "/assurer/"
+      - "/verzekeringen/"
+      - "/assurances/"
+      - "/insurance"  # Catches top-level /insurance.html
+      - "-insurance"  # Catches /payments/purchase-protection-insurance, etc.
+      - "cancellation-insurance"
+
+  # ==========================================
+  # 3. PLATFORMS & BUSINESS SECTORS
+  # ==========================================
+  digital_online_banking:
+    label: "Digital, Mobile & Online Banking"
+    keywords:
+      - "online-banking-for-businesses"
+      - "doing-business-online"
+      - "duurzaam-ondernemen-begint-nu"
+      - "easy-banking-app"
+      - "mobile-payments"
+      - "online-payments"
+      - "online-banking"
+      - "self-banking"
+      - "banque-par-vous-meme"
+    url_patterns:
+      - "/online-banking-for-businesses/"
+      - "/doing-business-online/"
+      - "/duurzaam-ondernemen-begint-nu/"
+      - "/mobile-payments/"
+      - "/online-payments/"
+      - "/online-banking/"
+      - "/self-banking/"
+      - "/banque-par-vous-meme/"
+
+  business_entrepreneurs:
+    label: "Business, Entrepreneurs & Professionals"
+    keywords:
+      - "medical-professions"
+      - "liberal-professions"
+      - "legal-professions"
+      - "sustainable-business"
+      - "specific-sectors"
+      - "foreign-trade"
+      - "entrepreneurs"
+      - "business"
+      - "professional"
+      - "starters"
+      - "start-ups"
+      - "notary"
+      - "my-sector"
+      - "secteurs"
+      - "vos-ambitions"
+    url_patterns:
+      - "/sustainable-business/"
+      - "/medical-professions/"
+      - "/liberal-professions/"
+      - "/legal-professions/"
+      - "/foreign-trade/"
+      - "/specific-sectors/"
+      - "/entrepreneurs/"
+      - "/business/"
+      - "/professional/"
+      - "/starters/"
+      - "/start-ups/"
+      - "/notary/"
+      - "/my-sector/"
+      - "/secteurs/"
+      - "/vos-ambitions/"
+
+  # ==========================================
+  # 4. EDITORIAL, CAMPAIGNS & SEGMENTS
+  # ==========================================
+  marketing_editorial:
+    label: "Campaigns, News, Guides & Editorial"
+    keywords:
+      - "key-moments"
+      - "campaing"
+      - "campaign"
+      - "my-life"
+      - "news"
+      - "guides"
+      - "articles"
+      - "themes"
+      - "processes"
+      - "produits"
+    url_patterns:
+      - "/key-moments/"
+      - "/campaing/"
+      - "/campaign/"
+      - "/my-life/"
+      - "/news/"
+      - "/guides/"
+      - "/articles/"
+      - "/themes/"
+      - "/processes/"
+      - "/produits/"
+
+  customer_segments:
+    label: "Customer & Personal Segments"
+    keywords:
+      - "expats"
+      - "individuals"
+    url_patterns:
+      - "/expats/"
+      - "/individuals/"
+
+  # ==========================================
+  # 5. CATCH-ALL DAILY BANKING (MUST BE LAST)
+  # ==========================================
+  daily_services_other:
+    label: "General Daily Banking & Transfers"
+    keywords:
+      - "daily-banking"
+      - "sending-money"
+      - "paiements"
+      - "paiement"
+      - "payments"
+      - "services"
+    url_patterns:
+      - "/daily-banking/"
+      - "/sending-money/"
+      - "/paiements/"
+      - "/paiement/"
+      - "/payments/"
+      - "/services/"
+      - "/retail/"
