@@ -1,8 +1,8 @@
 """
 ING Banking Campaigns Comparator — API backend
 
-Serves everything in data/bank_analysis.db as JSON for the React app in app/,
-and proxies chatbot requests to Groq (keeps the API key server-side — it's
+Serves everything in data/bank_analysis.db as JSON for the React app in app/, and
+proxies chatbot requests to Groq (keeps the API key server-side — it's
 never sent to the browser).
 
 Run collector.py -> analyst.py -> analysis.py -> change_watcher.py (or
@@ -93,6 +93,11 @@ def get_changes():
 @app.get("/api/gaps")
 def get_gaps():
     return rows_from("gaps")
+
+
+@app.get("/api/recommendations")
+def get_recommendations():
+    return rows_from("recommendations")
 
 
 @app.get("/api/summary")
