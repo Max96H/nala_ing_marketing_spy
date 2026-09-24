@@ -3310,17 +3310,17 @@ banks:
     - loan
     - insurance
     sitemap_links:
-    - https://n26.com/en-be/legal-documents
-    - https://n26.com/en-be/legal-documents/n26-mobile
-    - https://n26.com/en-be/legal-documents/spaces
-    - https://n26.com/en-be/legal-documents/privacy-policy
-    - https://n26.com/en-be/legal-documents/n26-travel-esim
-    - https://n26.com/en-be/legal-documents/airport-lounges
-    - https://n26.com/en-be/legal-documents/n26-business-you-allianz-tnc-04-may-2023
-    - https://n26.com/en-be/legal-documents/n26-you-allianz-ipid
-    - https://n26.com/en-be/legal-documents/you
-    - https://n26.com/en-be/legal-documents/business-you
-    - https://n26.com/en-be/legal-documents/you-allianz-insurance-04-may-2023
+    # - https://n26.com/en-be/legal-documents
+    # - https://n26.com/en-be/legal-documents/n26-mobile
+    # - https://n26.com/en-be/legal-documents/spaces
+    # - https://n26.com/en-be/legal-documents/privacy-policy
+    # - https://n26.com/en-be/legal-documents/n26-travel-esim
+    # - https://n26.com/en-be/legal-documents/airport-lounges
+    # - https://n26.com/en-be/legal-documents/n26-business-you-allianz-tnc-04-may-2023
+    # - https://n26.com/en-be/legal-documents/n26-you-allianz-ipid
+    # - https://n26.com/en-be/legal-documents/you
+    # - https://n26.com/en-be/legal-documents/business-you
+    # - https://n26.com/en-be/legal-documents/you-allianz-insurance-04-may-2023
     - https://n26.com/en-be/metal
     - https://n26.com/en-be/free-bank-account
     - https://n26.com/en-be/aytac-aydin
@@ -3347,4 +3347,3 @@ banks:
     - https://n26.com/en-be/imprint
     - https://n26.com/en-be/travel-benefits-crm
     - https://n26.com/en-be/garmin-pay
-    - https://n26.com/en-be/sitemap

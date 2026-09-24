@@ -47,6 +47,7 @@ import analysis
 import product_recommendations
 import change_watcher
 import assistant
+import collect_n26
 
 
 # Default run: everything except collect — the team runs that separately.
@@ -104,7 +105,11 @@ def main() -> None:
         print(f"\n===== Running {stage} =====")
         try:
             if stage == "collect":
-                collect.run(selected_banks, scrolling)
+                if selected_banks[0] == "n26":
+                    collect_n26.run(selected_banks, scrolling)
+                else:
+                    collect.run(selected_banks, scrolling)
+
             elif stage == "analyst":
                 analyst.run(categories=args.categories)
             elif stage == "ux_score":
