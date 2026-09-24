@@ -77,7 +77,36 @@ def get_pages():
 
 @app.get("/api/positioning")
 def get_positioning():
-    return rows_from("positioning")
+    conn = get_conn()
+    if not table_exists(conn, "positioning"):
+        conn.close()
+        return []
+    
+    # Temporarily join on page_url without modifying analysis.py
+    query = """
+        SELECT 
+            p.pca_x, 
+            p.pca_y, 
+            p.bank, 
+            p.page_type,
+            p.page_url,
+            pg.tone, 
+            pg.value_proposition,
+            (
+                SELECT GROUP_CONCAT(pt.topic, ', ') 
+                FROM page_topics pt 
+                WHERE pt.page_id = pg.id
+            ) AS topics_list
+        FROM positioning p
+        LEFT JOIN pages pg ON p.page_url = pg.page_url
+    """
+    try:
+        rows = [dict(r) for r in conn.execute(query).fetchall()]
+    except sqlite3.OperationalError:
+        rows = rows_from("positioning")
+    
+    conn.close()
+    return rows
 
 
 @app.get("/api/radar")
