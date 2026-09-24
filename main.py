@@ -5,24 +5,33 @@ Default run (`python main.py`, no flags) does everything EXCEPT scraping —
 data collection is the team's side of the pipeline (src/collect.py) and is
 only run when explicitly asked for with --only collect:
 
-  1. Analyst    — send each row's raw_text to an LLM (via Groq), fill in
-                   tone / value_proposition, and topics into page_topics
-  2. Analysis   — compute the positioning map, radar scores, and gap-finder
-                   from the analyzed data (src/analysis.py)
-  3. Watchdog   — compare today's rows to the previous snapshot (if any)
+  1. Analyst    — send each row's raw_text to an LLM (via Groq/Gemini), fill
+                   in tone / value_proposition, and topics into page_topics.
+                   Only a priority subset of page_type categories runs by
+                   default — see --categories.
+  2. UX score   — deterministic UI/UX score per page (no LLM — see
+                   src/ux_score.py), independent of the analyst stage
+  3. Analysis   — compute the positioning map, radar scores, gap-finder, and
+                   recommendations from the analyzed data (src/analysis.py)
+  4. Product recs — diverse, LLM-written ING-vs-competitor recommendations
+                   for the Compare Products tab (src/product_recommendations.py)
+  5. Watchdog   — compare today's rows to the previous snapshot (if any)
                    and flag what changed into the 'changes' table
 
 Run this in your OWN environment with normal internet access, and with
-GROQ_API_KEY set. See README.md for full setup.
+GROQ_API_KEY or GEMINI_API_KEY set (matching LLM_PROVIDER). See README.md
+for full setup.
 
 Usage:
-    python main.py                        # analyst -> analysis -> watchdog (no scraping)
-    python main.py --skip-analyst          # analysis -> watchdog only
-    python main.py --only collect          # scrape only (team's stage) — never runs by default
-    python main.py -b ing kbc --only collect   # scrape only ING and KBC
-    python main.py --only analysis         # re-run just the positioning/radar/gaps
-    python main.py --only watchdog         # re-run just one stage
-    python main.py --only assistant        # launch the interactive chatbot
+    python main.py                                # analyst -> ux_score -> analysis -> watchdog
+    python main.py --skip-analyst                 # ux_score -> analysis -> watchdog only
+    python main.py --only collect --scroll         # scrape (team's stage) — never runs by default
+    python main.py -b ing kbc --only collect       # scrape only ING and KBC
+    python main.py --only analyst --categories savings_investments   # one category only
+    python main.py --only ux_score                # re-run just the UI/UX scores
+    python main.py --only analysis                # re-run just the positioning/radar/gaps
+    python main.py --only watchdog                 # re-run just one stage
+    python main.py --only assistant                # launch the interactive chatbot
 """
 
 import argparse
@@ -33,14 +42,16 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 import collect
 import analyst
+import ux_score
 import analysis
+import product_recommendations
 import change_watcher
 import assistant
 
 
 # Default run: everything except collect — the team runs that separately.
 # 'collect' and 'assistant' are only ever run explicitly via --only.
-STAGES = ["analyst", "analysis", "watchdog"]
+STAGES = ["analyst", "ux_score", "analysis", "product_recommendations", "watchdog"]
 ALL_CHOICES = ["collect"] + STAGES + ["assistant"]
 
 
@@ -60,13 +71,19 @@ def main() -> None:
     )
     parser.add_argument(
         "--scroll",
-        action="store_true",  # <--- Automatically sets args.scroll to True when present, False when absent
-        help="Scroll down the page to trigger lazy-loaded elements before taking a screenshot. Default: False",
+        action="store_true",
+        help="Scroll down the page to trigger lazy-loaded elements before taking a screenshot. "
+             "Default: False",
     )
-    
+    parser.add_argument(
+        "--categories", nargs="+", default=None,
+        help=f"page_type categories for the analyst stage, in priority order (only relevant "
+             f"with the analyst stage). Default: {' '.join(analyst.DEFAULT_CATEGORIES)}. "
+             f"Pass 'all' for no filter.",
+    )
     parser.add_argument(
         "--skip-analyst", action="store_true",
-        help="Skip the LLM analysis step (useful if you don't have GROQ_API_KEY set yet).",
+        help="Skip the LLM analysis step (useful if you don't have an API key set yet).",
     )
     parser.add_argument(
         "--only", choices=ALL_CHOICES,
@@ -79,10 +96,7 @@ def main() -> None:
 
     stages_to_run = [args.only] if args.only else list(STAGES)
     scrolling = args.scroll
-    if scrolling:
-        print("Will scroll to load the page before screenshot.")
-    else:
-        print("Run without scrolling.")
+    print("Will scroll to load the page before screenshot." if scrolling else "Run without scrolling.")
     if args.skip_analyst and "analyst" in stages_to_run and not args.only:
         stages_to_run.remove("analyst")
 
@@ -92,9 +106,13 @@ def main() -> None:
             if stage == "collect":
                 collect.run(selected_banks, scrolling)
             elif stage == "analyst":
-                analyst.run()
+                analyst.run(categories=args.categories)
+            elif stage == "ux_score":
+                ux_score.run()  # no LLM cost, so score every page by default, not just --categories
             elif stage == "analysis":
                 analysis.run()
+            elif stage == "product_recommendations":
+                product_recommendations.run()
             elif stage == "watchdog":
                 change_watcher.run()
             elif stage == "assistant":

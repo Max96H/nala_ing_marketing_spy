@@ -159,7 +159,10 @@ function Stat({ label, value }) {
 export function ErrorState({ message }) {
   return (
     <div className="panel">
-      <div className="empty-state">Couldn't load data: {message}</div>
+      <div className="empty-state">
+        This data isn't available right now (some banks — like N26 — may not have been fully
+        collected yet). Technical detail: {message}
+      </div>
     </div>
   )
 }

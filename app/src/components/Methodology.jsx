@@ -41,6 +41,14 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'Compare Products — UI/UX score and recommendations',
+    body: [
+      `Each product category lets you pick which of ING's pages to anchor the comparison on, then shows the best (most substantial) page from each competitor — "best" is judged by content length, a proxy for the real flagship page rather than a thin stub the classifier happened to catch.`,
+      `The UI/UX score (0-10) comes from a dedicated, deterministic pipeline (ux_score.py) — no LLM involved, so nothing here can be hallucinated. It's built from six sub-scores, each grounded in a named, established principle rather than an arbitrary number: value clarity (2 pts — a concrete, quantified offer reduces ambiguity), CTA clarity (2 pts — a clear call-to-action helps orientation, but too many competing ones score lower per Hick's Law), content hierarchy (1 pt — a headline plus a supporting subtitle, per Nielsen's heuristics), scannability (1 pt — body text in a healthy length range), visual balance (2 pts — supporting imagery without an overwhelming wall of it, Nielsen's "aesthetic and minimalist design"), and accessibility contrast (2 pts — the WCAG 2.1 contrast ratio between the page's two most dominant colours, scored against the same 4.5:1 / 3:1 thresholds real accessibility audits use). Every sub-score is stored, not just the total, so any number on screen can be traced back to exactly why it landed where it did.`,
+      `The "Recommendation for ING" column is rule-based, not LLM-generated — it compares a competitor's real score and specific signals (offer, CTA) against the currently selected ING product and phrases the gap cautiously. It only appears when a competitor genuinely outscores ING; otherwise it says plainly that no action is needed.`,
+    ],
+  },
+  {
     title: 'Scope and legal grounds',
     body: [
       `Every bank's robots.txt was checked before scraping, and only pages/paths it permits are crawled. Data collection is limited to publicly available marketing pages — no personal data, no login-gated content, no bypassing of access restrictions.`,
