@@ -12,7 +12,6 @@ import {
 import { api, bankColor } from '../api'
 import { ErrorState } from './Overview'
 
-// Helper function to format page types nicely ("utility_security_legal" -> "Utility Security Legal")
 function formatPageType(label) {
   if (!label) return 'Uncategorized'
   return label
@@ -27,24 +26,22 @@ export default function PositioningMap() {
   const [selectedPageTypes, setSelectedPageTypes] = useState(new Set())
 
   useEffect(() => {
-    api.positioning()
+    api
+      .positioning()
       .then((data) => {
         setRows(data)
-        // Select all unique page types by default upon loading
         const initialTypes = new Set(data.map((r) => r.page_type || 'uncategorized'))
         setSelectedPageTypes(initialTypes)
       })
       .catch((e) => setError(e.message))
   }, [])
 
-  // Extract all distinct page types sorted alphabetically
   const availablePageTypes = useMemo(() => {
     if (!rows) return []
     const types = new Set(rows.map((r) => r.page_type || 'uncategorized'))
     return Array.from(types).sort()
   }, [rows])
 
-  // Filter rows by currently selected page types
   const filteredRows = useMemo(() => {
     if (!rows) return []
     return rows.filter((r) => {
@@ -53,7 +50,6 @@ export default function PositioningMap() {
     })
   }, [rows, selectedPageTypes])
 
-  // Toggle page type selection
   const togglePageType = (type) => {
     setSelectedPageTypes((prev) => {
       const next = new Set(prev)
@@ -66,15 +62,8 @@ export default function PositioningMap() {
     })
   }
 
-  // Select all page types
-  const selectAll = () => {
-    setSelectedPageTypes(new Set(availablePageTypes))
-  }
-
-  // Clear all page types
-  const clearAll = () => {
-    setSelectedPageTypes(new Set())
-  }
+  const selectAll = () => setSelectedPageTypes(new Set(availablePageTypes))
+  const clearAll = () => setSelectedPageTypes(new Set())
 
   if (error) return <ErrorState message={error} />
   if (!rows) return <div className="empty-state">Loading…</div>
@@ -94,102 +83,157 @@ export default function PositioningMap() {
 
   return (
     <div className="panel">
-      {/* Page Type Filter Bar */}
-      <div style={{ marginBottom: 20 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'space-between',
-            marginBottom: 8,
-          }}
-        >
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink-soft, #555)' }}>
-            Filter by Page Type:
-          </span>
-          <div style={{ display: 'flex', gap: 8, fontSize: 12 }}>
-            <button
-              onClick={selectAll}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#0066cc',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              Select All
-            </button>
-            <span style={{ color: '#ccc' }}>|</span>
-            <button
-              onClick={clearAll}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#0066cc',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              Clear All
-            </button>
-          </div>
-        </div>
-
-        {/* Toggle Chips */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {availablePageTypes.map((type) => {
-            const isSelected = selectedPageTypes.has(type)
-            return (
-              <button
-                key={type}
-                onClick={() => togglePageType(type)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 16,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  border: isSelected ? '1px solid #0066cc' : '1px solid #d1d5db',
-                  backgroundColor: isSelected ? '#0066cc' : '#f3f4f6',
-                  color: isSelected ? '#ffffff' : '#4b5563',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {formatPageType(type)}
-              </button>
-            )
-          })}
+      {/* Controls */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 10,
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-ink-soft)' }}>
+          Filter by Page Type:
+        </span>
+        <div style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+          <button
+            onClick={selectAll}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--color-accent)',
+              cursor: 'pointer',
+              padding: 0,
+              fontWeight: 500,
+            }}
+          >
+            Select All
+          </button>
+          <span style={{ color: 'var(--color-border)' }}>|</span>
+          <button
+            onClick={clearAll}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--color-accent)',
+              cursor: 'pointer',
+              padding: 0,
+              fontWeight: 500,
+            }}
+          >
+            Clear All
+          </button>
         </div>
       </div>
 
-      {/* Responsive Scatter Plot */}
+      <div className="chat-suggestions" style={{ marginBottom: 20 }}>
+        {availablePageTypes.map((type) => {
+          const isSelected = selectedPageTypes.has(type)
+          return (
+            <button
+              key={type}
+              onClick={() => togglePageType(type)}
+              className="chat-suggestion"
+              style={
+                isSelected
+                  ? {
+                      borderColor: 'var(--color-accent)',
+                      color: 'var(--color-accent)',
+                      background: 'var(--color-accent-soft)',
+                      fontWeight: 500,
+                    }
+                  : {}
+              }
+            >
+              {formatPageType(type)}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Map Chart */}
       <ResponsiveContainer width="100%" height={480}>
-        <ScatterChart margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
-          <CartesianGrid stroke="#e4e7eb" />
-          <XAxis type="number" dataKey="pca_x" tick={{ fontSize: 12 }} />
-          <YAxis type="number" dataKey="pca_y" tick={{ fontSize: 12 }} />
+        <ScatterChart margin={{ top: 10, right: 100, bottom: 20, left: 0 }}>
+          <CartesianGrid stroke="var(--color-border)" />
+          <XAxis
+            type="number"
+            dataKey="pca_x"
+            tick={{ fontSize: 12 }}
+            label={{
+              value: 'Content Focus',
+              position: 'bottom',
+              offset: 0,
+              style: { fontSize: 12, fill: 'var(--color-ink-soft)' },
+            }}
+          />
+          <YAxis
+            type="number"
+            dataKey="pca_y"
+            tick={{ fontSize: 12 }}
+            label={{
+              value: 'Tone & Topic Variation',
+              angle: -90,
+              position: 'insideLeft',
+              style: { fontSize: 12, fill: 'var(--color-ink-soft)', textAnchor: 'middle' },
+            }}
+          />
           <Tooltip
             cursor={{ strokeDasharray: '3 3' }}
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null
               const d = payload[0].payload
+              
+              // Normalize topics list display
+              const topics = Array.isArray(d.topics_list)
+                ? d.topics_list.join(', ')
+                : d.topics_list || 'N/A'
+
               return (
                 <div
                   style={{
-                    background: '#fff',
-                    border: '1px solid #e4e7eb',
-                    borderRadius: 6,
-                    padding: '8px 12px',
-                    fontSize: 13,
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 8,
+                    padding: '10px 14px',
+                    fontSize: 12.5,
+                    maxWidth: 320,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                   }}
                 >
-                  <strong>{d.bank}</strong> — {formatPageType(d.page_type)}
+                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
+                    {d.bank?.toUpperCase()} —{' '}
+                    <span style={{ fontWeight: 500, color: 'var(--color-ink-soft)' }}>
+                      {formatPageType(d.page_type)}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div>
+                      <strong style={{ color: 'var(--color-ink-soft)' }}>Tone: </strong>
+                      <span>{d.tone || 'N/A'}</span>
+                    </div>
+
+                    <div>
+                      <strong style={{ color: 'var(--color-ink-soft)' }}>Value Proposition: </strong>
+                      <span>{d.value_proposition || 'N/A'}</span>
+                    </div>
+
+                    <div>
+                      <strong style={{ color: 'var(--color-ink-soft)' }}>Topics: </strong>
+                      <span>{topics}</span>
+                    </div>
+                  </div>
                 </div>
               )
             }}
           />
-          <Legend formatter={(value) => value} />
+          <Legend
+            layout="vertical"
+            position="right"
+            itemStyle={{ marginBottom: 30 }}
+            wrapperStyle={{ paddingLeft: 20 }}
+            formatter={(value) => value}
+          />
           {banks.map((bank) => (
             <Scatter
               key={bank}
