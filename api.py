@@ -134,6 +134,11 @@ def get_ux_scores():
     return rows_from("ux_scores")
 
 
+@app.get("/api/product_recommendations")
+def get_product_recommendations():
+    return rows_from("product_recommendations")
+
+
 @app.get("/api/summary")
 def get_summary():
     conn = get_conn()
@@ -164,22 +169,24 @@ class ChatRequest(BaseModel):
 
 @app.post("/api/chat")
 def chat(req: ChatRequest):
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="GROQ_API_KEY not set on the server.")
-
-    from groq import Groq
-    client = Groq(api_key=api_key)
+    from llm_client import get_client
+    try:
+        client, model = get_client()
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
     conn = get_conn()
-    context = assistant.load_context(conn)
+    # Bounded context, scoped to the actual question being asked — not the whole
+    # database. Without this, a 3,000+ page database blows past context limits.
+    latest_question = req.messages[-1].content if req.messages else ""
+    context = assistant.load_context(conn, latest_question)
     conn.close()
 
     full_messages = [{"role": "system", "content": f"{assistant.SYSTEM_PROMPT}\n\n{context}"}]
     full_messages += [{"role": m.role, "content": m.content} for m in req.messages]
 
     response = client.chat.completions.create(
-        model=assistant.MODEL,
+        model=model,
         max_tokens=1000,
         temperature=assistant.TEMPERATURE,
         messages=full_messages,

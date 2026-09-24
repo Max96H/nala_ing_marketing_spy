@@ -26,37 +26,17 @@ function scoreColor(score) {
   return 'var(--color-ink-faint)'
 }
 
-// Rule-based, not LLM-generated — compares a competitor's real backend UX score
-// and specific signals (offer, CTA) against the selected ING product, phrased
-// cautiously, consistent with how gap recommendations are phrased elsewhere.
-function buildRecommendation(competitor, competitorScore, ing, ingScore) {
-  if (competitorScore == null || ingScore == null) {
-    return 'Not enough scored data yet to compare.'
-  }
-  if (competitorScore <= ingScore) {
-    return "ING's page already scores as well or better here — no immediate action needed."
-  }
-  const reasons = []
-  if (competitor.has_numeric_offer && !ing.has_numeric_offer) {
-    reasons.push('leads with a concrete, quantified offer')
-  }
-  if (competitor.cta_text && !ing.cta_text) {
-    reasons.push('has a clearer call-to-action')
-  }
-  const reasonText = reasons.length > 0 ? reasons.join(' and ') : 'scores higher on the measured signals overall'
-  return `Worth a look — ${competitor.bank} ${reasonText}.`
-}
-
 export default function ProductComparison() {
   const [pages, setPages] = useState(null)
   const [uxScores, setUxScores] = useState(null)
+  const [recommendations, setRecommendations] = useState(null)
   const [error, setError] = useState(null)
   const [selectedType, setSelectedType] = useState(null)
   const [selectedIngId, setSelectedIngId] = useState(null)
 
   useEffect(() => {
-    Promise.all([api.pages(), api.uxScores()])
-      .then(([p, ux]) => { setPages(p); setUxScores(ux) })
+    Promise.all([api.pages(), api.uxScores(), api.productRecommendations()])
+      .then(([p, ux, recs]) => { setPages(p); setUxScores(ux); setRecommendations(recs) })
       .catch((e) => setError(e.message))
   }, [])
 
@@ -65,6 +45,14 @@ export default function ProductComparison() {
     for (const row of uxScores || []) map[row.page_id] = row
     return map
   }, [uxScores])
+
+  const recommendationByPair = useMemo(() => {
+    const map = {}
+    for (const row of recommendations || []) {
+      map[`${row.ing_page_id}_${row.competitor_page_id}`] = row.recommendation
+    }
+    return map
+  }, [recommendations])
 
   const analyzed = useMemo(
     () => (pages ? pages.filter((p) => p.tone && p.tone.trim() !== '') : []),
@@ -120,7 +108,7 @@ export default function ProductComparison() {
   const selectedIngPage = ingProducts.find((p) => p.id === selectedIngId) || null
 
   if (error) return <ErrorState message={error} />
-  if (!pages || !uxScores) return <div className="empty-state">Loading…</div>
+  if (!pages || !uxScores || !recommendations) return <div className="empty-state">Loading…</div>
 
   if (availableTypes.length === 0) {
     return (
@@ -164,7 +152,7 @@ export default function ProductComparison() {
         </div>
       </div>
 
-      {/* ING product picker — the list goes above the comparison */}
+      {/* ING product picker — names only, no score suffix */}
       {ingProducts.length === 0 ? (
         <div className="panel">
           <div className="empty-state">
@@ -180,7 +168,6 @@ export default function ProductComparison() {
           <div className="chat-suggestions" style={{ marginBottom: 0 }}>
             {ingProducts.map((p) => {
               const isSelected = p.id === selectedIngId
-              const score = scoreByPageId[p.id]?.total_score
               return (
                 <button
                   key={p.id}
@@ -193,7 +180,7 @@ export default function ProductComparison() {
                       : {}
                   }
                 >
-                  {p.headline || p.page_url}{score != null ? ` · ${score}/10` : ''}
+                  {p.headline || p.page_url}
                 </button>
               )
             })}
@@ -225,13 +212,11 @@ export default function ProductComparison() {
                 <ComparisonRow page={selectedIngPage} score={ingScore} recommendation="—" pinned />
                 {competitorPages.map((p) => {
                   const score = scoreByPageId[p.id]?.total_score ?? null
+                  const recommendation =
+                    recommendationByPair[`${selectedIngPage.id}_${p.id}`] ??
+                    'Not generated yet — run product_recommendations.py.'
                   return (
-                    <ComparisonRow
-                      key={p.id}
-                      page={p}
-                      score={score}
-                      recommendation={buildRecommendation(p, score, selectedIngPage, ingScore)}
-                    />
+                    <ComparisonRow key={p.id} page={p} score={score} recommendation={recommendation} />
                   )
                 })}
               </tbody>

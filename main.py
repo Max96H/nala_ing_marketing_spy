@@ -13,7 +13,9 @@ only run when explicitly asked for with --only collect:
                    src/ux_score.py), independent of the analyst stage
   3. Analysis   — compute the positioning map, radar scores, gap-finder, and
                    recommendations from the analyzed data (src/analysis.py)
-  4. Watchdog   — compare today's rows to the previous snapshot (if any)
+  4. Product recs — diverse, LLM-written ING-vs-competitor recommendations
+                   for the Compare Products tab (src/product_recommendations.py)
+  5. Watchdog   — compare today's rows to the previous snapshot (if any)
                    and flag what changed into the 'changes' table
 
 Run this in your OWN environment with normal internet access, and with
@@ -42,13 +44,14 @@ import collect
 import analyst
 import ux_score
 import analysis
+import product_recommendations
 import change_watcher
 import assistant
 
 
 # Default run: everything except collect — the team runs that separately.
 # 'collect' and 'assistant' are only ever run explicitly via --only.
-STAGES = ["analyst", "ux_score", "analysis", "watchdog"]
+STAGES = ["analyst", "ux_score", "analysis", "product_recommendations", "watchdog"]
 ALL_CHOICES = ["collect"] + STAGES + ["assistant"]
 
 
@@ -108,6 +111,8 @@ def main() -> None:
                 ux_score.run()  # no LLM cost, so score every page by default, not just --categories
             elif stage == "analysis":
                 analysis.run()
+            elif stage == "product_recommendations":
+                product_recommendations.run()
             elif stage == "watchdog":
                 change_watcher.run()
             elif stage == "assistant":

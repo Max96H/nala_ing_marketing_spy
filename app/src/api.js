@@ -18,6 +18,7 @@ export const api = {
   gaps: () => getJSON('/api/gaps'),
   recommendations: () => getJSON('/api/recommendations'),
   uxScores: () => getJSON('/api/ux_scores'),
+  productRecommendations: () => getJSON('/api/product_recommendations'),
   chat: async (messages) => {
     const res = await fetch(`${API_BASE}/api/chat`, {
       method: 'POST',
