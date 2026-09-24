@@ -52,3 +52,10 @@ export const IconInfo = () => (
     <circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none" />
   </svg>
 )
+
+export const IconCompare = () => (
+  <svg viewBox="0 0 24 24" className="nav-icon" {...common}>
+    <rect x="3.5" y="4" width="7" height="16" rx="1.2" />
+    <rect x="13.5" y="4" width="7" height="16" rx="1.2" />
+  </svg>
+)

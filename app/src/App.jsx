@@ -2,11 +2,11 @@ import { useState } from 'react'
 import Overview from './components/Overview'
 import PositioningMap from './components/PositioningMap'
 import RadarComparison from './components/RadarComparison'
-import ChangeFeed from './components/ChangeFeed'
+import ProductComparison from './components/ProductComparison'
 import Gaps from './components/Gaps'
 import Chatbot from './components/Chatbot'
 import Methodology from './components/Methodology'
-import { IconOverview, IconMap, IconRadar, IconChanges, IconGaps, IconChat, IconInfo } from './components/Icons'
+import { IconOverview, IconMap, IconRadar, IconCompare, IconGaps, IconChat, IconInfo } from './components/Icons'
 
 const VIEWS = [
   { id: 'overview', label: 'Overview', icon: IconOverview, component: Overview,
@@ -15,8 +15,8 @@ const VIEWS = [
     title: 'Positioning map', description: "Where ING sits relative to competitors, by tone, value proposition, and topics." },
   { id: 'radar', label: 'Radar', icon: IconRadar, component: RadarComparison,
     title: 'Radar comparison', description: 'Compare banks across five measurable campaign dimensions.' },
-  { id: 'changes', label: 'Changes', icon: IconChanges, component: ChangeFeed,
-    title: 'Change feed', description: 'What moved between scrape snapshots.' },
+  { id: 'products', label: 'Compare Products', icon: IconCompare, component: ProductComparison,
+    title: 'Compare products', description: 'Pick a product category to compare how each bank presents it, side by side.' },
   { id: 'gaps', label: 'Gaps', icon: IconGaps, component: Gaps,
     title: 'Gaps', description: "Topics competitors use that ING's campaigns don't." },
   { id: 'chat', label: 'Ask', icon: IconChat, component: Chatbot,

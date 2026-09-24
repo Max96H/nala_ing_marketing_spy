@@ -41,6 +41,14 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'Compare Products — UX score and recommendations',
+    body: [
+      `The Compare Products tab shows one page per bank (the most substantial one, by content length — a proxy for "the real flagship page" rather than a thin stub the category classifier happened to catch) and scores each out of 10.`,
+      `This is a deterministic proxy score built from fields already scraped, not a rigorous UX audit — no dedicated design-review model is behind it. It awards points for: a clear headline, a supporting subtitle, a clear call-to-action, a concrete/quantified offer, balanced visual support (some images, not an overwhelming number), and a healthy content length (neither a stub nor an overwhelming wall of text).`,
+      `The "Recommendation for ING" column is rule-based, not LLM-generated — it compares a competitor's score and specific signals (offer, CTA) against ING's page for the same product and phrases the gap cautiously. It only appears when a competitor genuinely outscores ING; otherwise it says plainly that no action is needed.`,
+    ],
+  },
+  {
     title: 'Scope and legal grounds',
     body: [
       `Every bank's robots.txt was checked before scraping, and only pages/paths it permits are crawled. Data collection is limited to publicly available marketing pages — no personal data, no login-gated content, no bypassing of access restrictions.`,

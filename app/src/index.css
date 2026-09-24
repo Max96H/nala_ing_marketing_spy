@@ -12,8 +12,8 @@
 
   /* categorical bank colors — used only inside charts/legends, never UI chrome */
   --bank-ing: #d97a3d;
-  --bank-bnp: #2e7d6b;
-  --bank-kbc: #3a5f8a;
+  --bank-kbc: #2e7d6b;
+  --bank-bnp: #3a5f8a;
   --bank-belfius: #b23a48;
   --bank-revolut: #2b2f36;
   --bank-other: #7b5ea7;
