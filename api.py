@@ -81,7 +81,7 @@ def get_positioning():
     if not table_exists(conn, "positioning"):
         conn.close()
         return []
-    
+
     # Temporarily join on page_url without modifying analysis.py
     query = """
         SELECT 
@@ -104,7 +104,7 @@ def get_positioning():
         rows = [dict(r) for r in conn.execute(query).fetchall()]
     except sqlite3.OperationalError:
         rows = rows_from("positioning")
-    
+
     conn.close()
     return rows
 
@@ -127,6 +127,11 @@ def get_gaps():
 @app.get("/api/recommendations")
 def get_recommendations():
     return rows_from("recommendations")
+
+
+@app.get("/api/ux_scores")
+def get_ux_scores():
+    return rows_from("ux_scores")
 
 
 @app.get("/api/summary")

@@ -17,6 +17,7 @@ export const api = {
   changes: () => getJSON('/api/changes'),
   gaps: () => getJSON('/api/gaps'),
   recommendations: () => getJSON('/api/recommendations'),
+  uxScores: () => getJSON('/api/ux_scores'),
   chat: async (messages) => {
     const res = await fetch(`${API_BASE}/api/chat`, {
       method: 'POST',
@@ -36,11 +37,11 @@ export const api = {
 // lowercase YAML keys from banks.yaml (e.g. "ing", "bnp"), not display names.
 const BANK_COLOR_MAP = {
   ing: '#d97a3d',
-  bnp: '#2e7d6b',
-  kbc: '#3a5f8a',
+  kbc: '#2e7d6b',
+  bnp: '#3a5f8a',
   belfius: '#b23a48',
   revolut: '#2b2f36',
-  n26: '#fcd34d',
+  n26: '#c9a227',
   bunq: '#4f6b3c',
   argenta: '#7b5ea7',
 }
@@ -49,7 +50,7 @@ const BANK_COLOR_MAP = {
 // or an unrecognized display-name variant). Picked deterministically from a hash
 // of the name, so a given bank always gets the same color across renders/tabs —
 // never all falling through to one identical color.
-const FALLBACK_PALETTE = ['#7b5ea7', '#fcd34d', '#4f6b3c', '#8a4f6b', '#3a7d5f', '#6b5a3a']
+const FALLBACK_PALETTE = ['#7b5ea7', '#c9a227', '#4f6b3c', '#8a4f6b', '#3a7d5f', '#6b5a3a']
 
 function hashString(str) {
   let hash = 0
