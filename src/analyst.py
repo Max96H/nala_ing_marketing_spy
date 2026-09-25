@@ -147,7 +147,7 @@ def analyze_batch(client, model: str, pages: list[sqlite3.Row]) -> list[dict]:
 def _fetch_rows(conn: sqlite3.Connection, categories: list[str] | None) -> list[sqlite3.Row]:
     base_query = (
         "SELECT id, bank, page_url, page_type, raw_text FROM pages "
-        "WHERE (tone IS NULL OR tone = '') AND raw_text IS NOT NULL AND raw_text != ''"
+        "WHERE (tone IS NULL OR tone = '' OR tone = 'error, technical' OR tone = 'error page, no content') AND raw_text IS NOT NULL AND raw_text != ''"
     )
     params: list = []
 
