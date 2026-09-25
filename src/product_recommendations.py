@@ -80,7 +80,6 @@ def build_pairs(conn: sqlite3.Connection) -> list[dict]:
        "SELECT id, bank, page_type, tone, value_proposition, has_numeric_offer, cta_text, raw_text "
         "FROM pages "
         "WHERE tone IS NOT NULL AND tone != '' "
-        "AND LOWER(bank) IN ('ing', 'n26')"
     ).fetchall()
 
     scores = {row["page_id"]: row["total_score"] for row in
