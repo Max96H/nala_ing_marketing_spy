@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm'
 import { api } from '../api'
 
 const SUGGESTIONS = [
-  'How does our tone compare to Revolut?',
+  'How does our tone compare to N26?',
   'What changed this week?',
   'Which bank uses the most casual language?',
   'What topics are we missing that competitors use?',
