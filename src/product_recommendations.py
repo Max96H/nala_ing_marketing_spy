@@ -77,8 +77,10 @@ def pick_best(pages: list[sqlite3.Row]) -> sqlite3.Row:
 
 def build_pairs(conn: sqlite3.Connection) -> list[dict]:
     pages = conn.execute(
-        "SELECT id, bank, page_type, tone, value_proposition, has_numeric_offer, cta_text, "
-        "raw_text FROM pages WHERE tone IS NOT NULL AND tone != ''"
+       "SELECT id, bank, page_type, tone, value_proposition, has_numeric_offer, cta_text, raw_text "
+        "FROM pages "
+        "WHERE tone IS NOT NULL AND tone != '' "
+        "AND LOWER(bank) IN ('ing', 'n26')"
     ).fetchall()
 
     scores = {row["page_id"]: row["total_score"] for row in
