@@ -20,6 +20,7 @@ Built during the BeCode AI & Data Science Bootcamp, in partnership with ING.
 <br>
 
 ![Product Overview](assets/hero-overview.png)
+<p align="center"><i>The Overview tab: Dataset scale at a glance before diving into any single comparison.</i></p>
 
 <br>
 
@@ -111,6 +112,38 @@ flowchart TD
 
 <br>
 
+## 🖼️ Visuals
+
+A walkthrough of what each module actually looks like, and what it's showing.
+
+<br>
+
+<p align="center"><img src="assets/positioning-map.png" alt="Positioning Map" width="85%"></p>
+
+**Positioning Map.** Every dot is one scraped page, plotted in 2D using TF-IDF + PCA over its tone, value proposition, and topics — pages that read alike sit close together, regardless of bank. Colour marks the bank. This is the fastest way to see the headline finding at a glance: whether ING's dots cluster nearer the traditional banks or drift toward the neobank cluster, and which competitor ING most resembles in a given product category. The category filter above the chart narrows this to one product line at a time (e.g. only savings pages), since "similar" only means something within a comparable category.
+
+<br>
+
+<p align="center"><img src="assets/radar-chart.png" alt="Radar Chart" width="85%"></p>
+
+**Radar.** Where the Positioning Map shows *similarity*, this shows *strength* — each bank's shape across five dimensions (promo intensity, visual richness, colour vibrancy, content density, topic diversity), normalized 0–1 so every bank is comparable on one chart. A bank's shape leaning outward on an axis means it leads competitors there; leaning inward flags a relative weak point. Read this alongside the Positioning Map: positioning tells you who ING resembles, radar tells you what to actually do differently from them.
+
+<br>
+
+<p align="center"><img src="assets/compare-products.png" alt="Compare Products" width="85%"></p>
+
+**Compare Products.** The most actionable tab for a business audience. Pick a category, and ING's page sits next to the closest competitor equivalent, each with a deterministic UX score (grounded in WCAG 2.1 contrast rules, Nielsen's usability heuristics, and Hick's Law — not an LLM's opinion) and a specific, LLM-generated recommendation on what the competitor does differently and worth considering. This is designed to answer "so what should we actually change?" directly, rather than leaving that inference to the reader.
+
+<br>
+
+<p align="center"><img src="assets/chatbot.png" alt="Assistant Chatbot" width="85%"></p>
+
+**Ask (Assistant).** A chatbot scoped to this dataset only — every answer is grounded in the actual scraped page content it retrieves for that question, not a general knowledge guess, and it never sends the full multi-thousand-page database to the model (that would blow the context window; instead it retrieves only the pages relevant to what's asked). Useful for exploring a question live in a meeting rather than pre-building every chart someone might ask for.
+
+<br>
+
+## 🧱 Tech Stack
+
 ## 🧱 Tech Stack
 
 <div align="center">
@@ -188,17 +221,17 @@ uvicorn api:app --reload
 ├── main.py                   # pipeline entrypoint
 ├── data/
 │   └── bank_analysis.db      # SQLite database
-└── assets/                   # README images — see below
+└── assets/                   # README images
 ```
 
-**Images this README expects in `assets/`:**
-| File | Suggested content |
+**Images used in this README:**
+| File | Used in |
 |---|---|
-| `hero-overview.png` | Overview tab screenshot |
-| `positioning-map.png` | Positioning Map tab screenshot |
-| `radar-chart.png` | Radar tab screenshot |
-| `compare-products.png` | Compare Products tab screenshot |
-| `chatbot.png` | Ask (chatbot) tab screenshot |
+| `hero-overview.png` | Top banner — Overview tab |
+| `positioning-map.png` | Visuals — Positioning Map |
+| `radar-chart.png` | Visuals — Radar |
+| `compare-products.png` | Visuals — Compare Products |
+| `chatbot.png` | Visuals — Ask (Assistant) |
 
 <br>
 
@@ -219,7 +252,7 @@ uvicorn api:app --reload
 
 ## 📄 License
 
-Academic project — built for BeCode's AI & Data Science Bootcamp in collaboration with ING. Not for commercial use.
+Academic project — built for BeCode's AI & Data Science Bootcamp in collaboration with ING.
 
 <div align="center">
 
