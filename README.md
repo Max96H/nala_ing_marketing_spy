@@ -20,7 +20,6 @@ Built during the BeCode AI & Data Science Bootcamp, in partnership with ING.
 <br>
 
 ![Product Overview](assets/hero-overview.png)
-<p align="center"><i>Screenshot placeholder — drop your Overview tab screenshot at <code>assets/hero-overview.png</code></i></p>
 
 <br>
 
@@ -95,7 +94,6 @@ flowchart TD
 ```
 
 ![Architecture Diagram](assets/architecture-diagram.png)
-<p align="center"><i>Optional: replace the diagram above with a designed PNG at <code>assets/architecture-diagram.png</code></i></p>
 
 **In short:** scrape responsibly → classify pages → let an LLM read each page the way a marketer would → score what can be measured deterministically → surface it all through a web app a business stakeholder can actually use.
 
@@ -199,7 +197,6 @@ uvicorn api:app --reload
 | File | Suggested content |
 |---|---|
 | `hero-overview.png` | Overview tab screenshot |
-| `architecture-diagram.png` | (optional) designed version of the workflow diagram above |
 | `positioning-map.png` | Positioning Map tab screenshot |
 | `radar-chart.png` | Radar tab screenshot |
 | `compare-products.png` | Compare Products tab screenshot |
