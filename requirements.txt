@@ -1,0 +1,15 @@
+playwright
+playwright-stealth
+beautifulsoup4
+colorthief
+groq
+python-dotenv
+pandas
+scikit-learn
+fastapi
+uvicorn
+PyYAML
+pillow
+robotexclusionrulesparser
+requests
+openai
