@@ -93,8 +93,6 @@ flowchart TD
     style K fill:#E0F7FA,stroke:#00838F
 ```
 
-![Architecture Diagram](assets/architecture-diagram.png)
-
 **In short:** scrape responsibly → classify pages → let an LLM read each page the way a marketer would → score what can be measured deterministically → surface it all through a web app a business stakeholder can actually use.
 
 <br>
